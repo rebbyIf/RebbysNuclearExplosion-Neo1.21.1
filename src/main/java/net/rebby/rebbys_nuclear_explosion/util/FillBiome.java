@@ -4,6 +4,7 @@ import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.tags.TagsProvider;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
@@ -36,17 +37,13 @@ public class FillBiome {
 
             Holder<Biome> holder = pChunk.getNoiseBiome(p_262550_, p_262551_, p_262552_);
             Registry<Biome> registries = level.registryAccess().registryOrThrow(Registries.BIOME);
-            Biome replacementBiome = registries.get(pReplacementBiome);
-            if (replacementBiome == null) {
-                return holder;
-            }
-            Holder<Biome> replacement = registries.wrapAsHolder(replacementBiome);
+            Holder<Biome> replacementBiome = registries.getHolderOrThrow(ResourceKey.create(Registries.BIOME, pReplacementBiome));
 
             //Holder<Biome> replacement = ForgeRegistries.BIOMES.getHolder(pReplacementBiome).orElse(holder);
-            if (pTargetRegion.isInside(i, j, k) && !holder.is(pReplacementBiome)) {
+            if (pTargetRegion.isInside(i, j, k)) {
                 pBiomeEntries.increment();
                 //System.out.println("Biome Found!");
-                return replacement;
+                return replacementBiome;
             } else {
                 //System.out.println("Biome Not Found!");
                 return holder;
@@ -62,7 +59,7 @@ public class FillBiome {
 
         for(int k = SectionPos.blockToSectionCoord(boundingbox.minZ()); k <= SectionPos.blockToSectionCoord(boundingbox.maxZ()); ++k) {
             for(int l = SectionPos.blockToSectionCoord(boundingbox.minX()); l <= SectionPos.blockToSectionCoord(boundingbox.maxX()); ++l) {
-                ChunkAccess chunkaccess = serverlevel.getChunk(l, k, ChunkStatus.FULL, false);
+                ChunkAccess chunkaccess = serverlevel.getChunk(l, k, ChunkStatus.FULL, true);
 
                 if (chunkaccess != null)
                     list.add(chunkaccess);

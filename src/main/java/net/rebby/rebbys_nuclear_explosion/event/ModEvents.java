@@ -1,7 +1,16 @@
 package net.rebby.rebbys_nuclear_explosion.event;
 
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -14,7 +23,11 @@ import net.rebby.rebbys_nuclear_explosion.entity.custom.NuclearExplosionEntity;
 import net.rebby.rebbys_nuclear_explosion.util.Irradiation;
 import org.joml.Vector3i;
 
+import java.util.List;
 import java.util.Objects;
+
+import static net.rebby.rebbys_nuclear_explosion.Config.r;
+import static net.rebby.rebbys_nuclear_explosion.Config.r3;
 
 
 public class ModEvents {
@@ -40,15 +53,34 @@ public class ModEvents {
                     Vector3i origin1 = origin.sub(1, 1, 1, new Vector3i());
                     entity.setIrradiation(new Irradiation(origin, origin, origin1, origin, origin1, 0));
 
-                    event.getLevel().explode(entity, entity.getX(), entity.getY(), entity.getZ(), (float) Config.r / 2 - 1, Level.ExplosionInteraction.TNT);
-                }
-            }
-        }
+                    Vec3 dim = new Vec3(r, r, r);
+                    Vec3 o = new Vec3(origin.x, origin.y, origin.z);
+                    AABB damageArea = new AABB(o.add(dim), o.subtract(dim));
 
-        @SubscribeEvent
-        public static void onNukeDamage(LivingIncomingDamageEvent event) {
-            if (event.getSource().getEntity() != null && event.getSource().getEntity().getType().equals(Entities.NUCLEAR_EXPLOSION.get())) {
-                event.getEntity().setRemainingFireTicks(20);
+                    // Gets entities to damage
+                    List<Entity> entities = event.getLevel().getEntities((Entity) null, damageArea, entity1 -> {
+                        if (entity1.distanceTo(entity) < r3) {
+                            return true;
+                        }
+                        Vec3 eyePos = entity1.getEyePosition();
+                        ClipContext context = new ClipContext(o, eyePos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity);
+                        return entity1.distanceTo(entity) < r &&
+                                event.getLevel().clip(context).getType() == HitResult.Type.MISS;
+                    });
+
+                    // Damages them
+                    for (Entity entity1 : entities) {
+                        float distance = entity1.distanceTo(entity);
+                        DamageSource source = new DamageSource(
+                                event.getLevel().registryAccess().holderOrThrow(DamageTypes.EXPLOSION),
+                                entity
+                        );
+                        entity1.hurt(source, (float) Math.pow((Config.r3 - distance)/10, 2));
+                        entity1.setRemainingFireTicks((int) (Math.pow((r3 - distance)/10, 2) * 5));
+                    }
+
+                    //event.getLevel().explode(entity, entity.getX(), entity.getY(), entity.getZ(), (float) Config.r / 2 - 1, Level.ExplosionInteraction.TNT);
+                }
             }
         }
 

@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -149,145 +150,6 @@ public class Irradiation {
         return threadX;
     }
 
-    public boolean irradiate(ServerLevel level) {
-        if (origin.y + 3 > level.getMaxBuildHeight() || origin.y - 3 < level.getMinBuildHeight())
-            return false;
-
-        outerMax.add(1,1,1);
-        outerMin.sub(1,1,1);
-        outerMax.y = Math.min(outerMax.y, level.getMaxBuildHeight() - 2);
-        outerMin.y = Math.max(outerMin.y, level.getMinBuildHeight()- 1);
-
-
-        int x, y = outerMax.y - 1, z = outerMin.z;
-        for (x = outerMin.x; x < outerMax.x; x++) {
-            if (x == innerMin.x && y >= innerMin.y && y < innerMax.y && z >= innerMin.z && z < innerMax.z) {
-                x = innerMax.x;
-            }
-            for (z = outerMin.z; z < outerMax.z; z++) {
-                if (x >= innerMin.x && x < innerMax.x && y >= innerMin.y && y < innerMax.y && z == innerMin.z) {
-                    z = innerMax.z;
-                }
-
-                Vector3f centerYPos = new Vector3f(x, origin.y, z);
-                boolean xzBeyondR1 = centerYPos.distance(origin.x, origin.y, origin.z) > Config.r2;
-                int loopYMax = xzBeyondR1 ? level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z)
-                        + SURFACE_SCAN_Y / 2 - 1 : innerMax.y;
-                loopYMax = Math.min(loopYMax, level.getMaxBuildHeight() - 1);
-                int loopYMin = xzBeyondR1 ? level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z)
-                        - SURFACE_SCAN_Y / 2 : innerMin.y;
-                loopYMin = Math.max(loopYMin, level.getMinBuildHeight());
-
-                for (y = loopYMax - 1; y >= loopYMin; y--) {
-
-                    if (!xzBeyondR1 && x >= innerMin.x && x < innerMax.x && y == innerMax.y && z >= innerMin.z && z < innerMax.z) {
-                        y = innerMin.y;
-                    }
-
-                    BlockPos blockPos = new BlockPos(x,y,z);
-                    Vector3f pos = new Vector3f(x,y,z);
-                    BlockState blockState = level.getBlockState(blockPos);
-                    boolean changeBlockState = false;
-                    BlockState blockStateUp = level.getBlockState(blockPos.above());
-                    boolean changeBlockStateUp = false;
-
-                    if (blockState.isAir() || blockState.equals(FIRE_BLOCK_STATE)) {
-                        continue;
-                    }
-
-                    if (pos.distance(origin.x, origin.y, origin.z) <= Config.r0 &&
-                            isExposed(blockPos, level)){
-                        if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/ice")) {
-                            blockState = WATER_LIQUID_STATE;
-                            changeBlockState = true;
-                            //level.getServer().execute(new SetBlockTask(level, blockPos, WATER_LIQUID_STATE));
-                        }
-                        if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_burns_away")) {
-                            blockStateUp = FIRE_BLOCK_STATE;
-                            changeBlockStateUp = true;
-                            //level.getServer().execute( new SetBlockTask(level, blockPos.above(), FIRE_BLOCK_STATE));
-                            //block.set("minecraft:coal_block");
-                        }
-                        if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_vaporizes/snow")) {
-                            //block.set("minecraft:air");
-                            blockState = AIR_BLOCK_STATE;
-                            changeBlockState = true;
-                            //level.getServer().execute(new SetBlockTask(level, blockPos, AIR_BLOCK_STATE));
-                        }
-
-                        // For testing purposes
-                        blockState = COBBLE_BLOCK_STATE;
-                        changeBlockState = true;
-                        //level.getServer().execute(new SetBlockTask(level, blockPos, COAL_BLOCK_STATE));
-                    }
-                    if (pos.distance(origin.x, origin.y, origin.z) <= Config.r1){
-                        if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_vaporizes/liquid")
-                                || checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/ice")) {
-                            blockState = AIR_BLOCK_STATE;
-                            changeBlockState = true;
-                            //level.getServer().execute(new SetBlockTask(level, blockPos, AIR_BLOCK_STATE));
-                        }
-
-                        if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/sand") && isExposed(blockPos, level)) {
-                            blockState = BLACK_GLASS_BLOCK_STATE;
-                            changeBlockState = true;
-                            //level.getServer().execute(new SetBlockTask(level, blockPos, BLACK_GLASS_BLOCK_STATE));
-                        }
-
-                        if (blockStateUp.isAir()) {
-                            blockStateUp = FIRE_BLOCK_STATE;
-                            changeBlockStateUp = true;
-                            //level.getServer().execute(new SetBlockTask(level, blockPos.above(), FIRE_BLOCK_STATE));
-                        }
-                        // For testing purposes
-                        blockState = COBBLE_BLOCK_STATE;
-                        changeBlockState = true;
-                    }
-                    if (pos.distance(origin.x, origin.y, origin.z) <= Config.r2){
-                        if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/sand")) {
-                            blockState = BLACK_GLASS_BLOCK_STATE;
-                            changeBlockState = true;
-                            //level.getServer().execute(new SetBlockTask(level, blockPos, BLACK_GLASS_BLOCK_STATE));
-                        }
-
-                        if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_diamondizes")) {
-                            blockState = DIAMOND_BLOCK_STATE;
-                            changeBlockState = true;
-                            //level.getServer().execute(new SetBlockTask(level, blockPos, DIAMOND_BLOCK_STATE));
-                        }
-
-                        if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_irradiates")) {
-                            blockState = AUTUNITE_BLOCK_STATE;
-                            changeBlockState = true;
-                            //level.getServer().execute(new SetBlockTask(level, blockPos, AUTUNITE_BLOCK_STATE));
-                        }
-
-                        if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_irradiates/liquid")) {
-                            blockState = URANIUM_BLOCK_STATE;
-                            changeBlockState = true;
-                            //level.getServer().execute(new SetBlockTask(level, blockPos, URANIUM_BLOCK_STATE));
-                        }
-
-                        // For testing purposes
-                        blockState = COBBLE_BLOCK_STATE;
-                        changeBlockState = true;
-                    }
-
-                    if (changeBlockState)
-                        level.setBlock(blockPos, blockState, 2);
-                    if (changeBlockStateUp)
-                        level.setBlock(blockPos.above(), blockStateUp, 2);
-                }
-            }
-        }
-
-
-        innerMax = new Vector3i(outerMax);
-        innerMin = new Vector3i(outerMin);
-
-        return innerMax.x - origin.x < Config.r0;
-    }
-
     public boolean irradiateThreaded(ServerLevel level) {
 
         if (origin.y + 3 > level.getMaxBuildHeight() || origin.y - 3 < level.getMinBuildHeight())
@@ -333,7 +195,7 @@ public class Irradiation {
 
                     detectableBlocks.put(blockPos, blockState);
 
-                    if (blockPos.getX() >> 4 == 0 && blockPos.getY() >> 4 == 0 && blockPos.getZ() >> 4 == 0){
+                    if (blockPos.getX() % 16 == 0 && blockPos.getY() % 16 == 0 && blockPos.getZ() % 16 == 0){
 
                         FillBiome.fill(level, blockPos, blockPos.offset(16,16,16), RebbysNuclearExplosion.getResource("irradiated_wasteland"));
 
@@ -351,7 +213,7 @@ public class Irradiation {
                 threadX = (threadX + 1) % width;
 
                 threads[i] = new Thread(new Irradiator(threadX, level, new Vector3i(origin), new Vector3i(outerMin), new Vector3i(outerMax), new Vector3i(innerMin),
-                        new Vector3i(innerMax), detectableBlocks, level.getMinBuildHeight(), level.getMaxBuildHeight(), yMap));
+                        new Vector3i(innerMax), detectableBlocks, level.getMinBuildHeight(), level.getMaxBuildHeight(), yMap, RandomSource.createNewThreadLocalInstance()));
                 threads[i].start();
 
                 if (threadX == 0) {
@@ -371,7 +233,7 @@ public class Irradiation {
 
     private record Irradiator(int threadX, ServerLevel level, Vector3i origin, Vector3i outerMin, Vector3i outerMax,
                               Vector3i innerMin, Vector3i innerMax, ConcurrentMap<BlockPos, BlockState> blocks,
-                              int levelMinY, int levelMaxY, ConcurrentMap<String, Integer> yMap) implements Runnable {
+                              int levelMinY, int levelMaxY, ConcurrentMap<String, Integer> yMap, RandomSource random) implements Runnable {
         @Override
         public void run() {
             ConcurrentMap<BlockPos, BlockState> changedBlocks = new ConcurrentHashMap<>(blocks.size() / 9);
@@ -408,11 +270,21 @@ public class Irradiation {
                         BlockState blockStateUp = blocks.get(blockPos.above());
                         boolean changeBlockStateUp = false;
 
+
                         if (blockState == null || blockStateUp == null || blockState.isAir() || blockState.equals(FIRE_BLOCK_STATE)) {
                             continue;
                         }
 
-                        if (pos.distance(origin.x, origin.y, origin.z) <= Config.r0 &&
+                        float distance = pos.distance(origin.x, origin.y, origin.z);
+                        float destruction = distance < Config.r3 ? (float) Math.pow((Config.r3 - distance)/4, 2)*1.5f + 2.25f * random.nextFloat() : -1;
+
+                        if (blockState.getBlock().defaultDestroyTime() >= 0 &&
+                                blockState.getBlock().defaultDestroyTime() < destruction){
+                            changedBlocks.put(blockPos, AIR_BLOCK_STATE);
+                            continue;
+                        }
+
+                        if (distance <= Config.r0 &&
                                 isExposed(blockPos, blocks)){
                             if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/ice")) {
                                 blockState = WATER_LIQUID_STATE;
@@ -439,7 +311,7 @@ public class Irradiation {
                             }
                             //level.getServer().execute(new SetBlockTask(level, blockPos, COAL_BLOCK_STATE));
                         }
-                        if (pos.distance(origin.x, origin.y, origin.z) <= Config.r1){
+                        if (distance <= Config.r1){
                             if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_vaporizes/liquid")
                                     || checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/ice")) {
                                 blockState = AIR_BLOCK_STATE;
@@ -464,7 +336,9 @@ public class Irradiation {
                                 changeBlockState = true;
                             }
                         }
-                        if (pos.distance(origin.x, origin.y, origin.z) <= Config.r2){
+                        if (distance <= Config.r2){
+
+
                             if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/sand")) {
                                 blockState = BLACK_GLASS_BLOCK_STATE;
                                 changeBlockState = true;
@@ -494,6 +368,8 @@ public class Irradiation {
                                 blockState = COBBLE_BLOCK_STATE;
                                 changeBlockState = true;
                             }
+
+
 
                         }
 

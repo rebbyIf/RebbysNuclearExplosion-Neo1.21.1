@@ -38,6 +38,7 @@ public class Config {
     public static int r0;
     public static int r1;
     public static int r2;
+    public static int r3;
     public static int nukeModelSize;
 
     private static boolean validateItemName(final Object obj)
@@ -63,7 +64,8 @@ public class Config {
         r = EXPLOSION_RADIUS.get();
         r0 = r * 3 /4;
         r1 = r / 2;
-        r2 = r / 3;
+        r2 = r / 4;
+        r3 = r2 * 9 /10;
         nukeModelSize = r / 7;
     }
 }

@@ -161,7 +161,7 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
             setInvisible(true);
         }
 
-        if (isDetonating && age > 20) {
+        if (isDetonating && age > 0) {
             isDetonating = irradiation.irradiateThreaded((ServerLevel) level());
             if (age % 3 == 0)
                 playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 128.0f, 1.0f);
