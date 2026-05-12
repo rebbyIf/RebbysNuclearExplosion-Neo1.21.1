@@ -16,6 +16,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.neoforged.neoforge.registries.DeferredBlock;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.rebby.rebbys_nuclear_explosion.Config;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
@@ -75,9 +77,8 @@ public class Irradiation {
     }
 
     private static BlockState getDefaultBlockState(ResourceLocation blockId) {
-        return BuiltInRegistries.BLOCK.get(blockId).equals(Blocks.AIR) ?
-                BuiltInRegistries.BLOCK.get(blockId).defaultBlockState() :
-                Blocks.COBBLESTONE.defaultBlockState();
+        return BuiltInRegistries.BLOCK.get(blockId).defaultBlockState();
+
     }
 
     private static boolean checkBlockStateHasTag(BlockState state, String tag) {
