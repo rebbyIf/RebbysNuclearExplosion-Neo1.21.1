@@ -7,8 +7,11 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.rebby.rebbys_nuclear_explosion.entity.Entities;
+import net.rebby.rebbys_nuclear_explosion.entity.client.renderer.NuclearExplosionRenderer;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = RebbysNuclearExplosion.MODID, dist = Dist.CLIENT)
@@ -27,5 +30,10 @@ public class RebbysNuclearExplosionClient {
         // Some client setup code
         RebbysNuclearExplosion.LOGGER.info("HELLO FROM CLIENT SETUP");
         RebbysNuclearExplosion.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+    }
+
+    @SubscribeEvent
+    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(Entities.NUCLEAR_EXPLOSION.get(), NuclearExplosionRenderer::new);
     }
 }

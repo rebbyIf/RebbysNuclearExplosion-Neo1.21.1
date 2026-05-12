@@ -45,9 +45,17 @@ public class Config {
         return obj instanceof final String itemName && BuiltInRegistries.ITEM.containsKey(ResourceLocation.parse(itemName));
     }
 
-    @SubscribeEvent
-    static void onLoad(final ModConfigEvent event)
+    public static void onLoad(final ModConfigEvent.Loading event)
     {
+        load();
+    }
+
+    public static void onReload(final ModConfigEvent.Reloading event)
+    {
+        load();
+    }
+
+    private static void load() {
         isTestingEnvironment = IS_TESTING_ENVIRONMENT.get();
         maxExplosionThreads = MAX_EXPLOSION_THREADS.get();
         Irradiation.initThreads();

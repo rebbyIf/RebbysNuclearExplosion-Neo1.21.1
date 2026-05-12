@@ -47,7 +47,7 @@ public class ModEvents {
 
         @SubscribeEvent
         public static void onNukeDamage(LivingIncomingDamageEvent event) {
-            if (Objects.requireNonNull(event.getSource().getEntity()).getType().equals(Entities.NUCLEAR_EXPLOSION.get())) {
+            if (event.getSource().getEntity() != null && event.getSource().getEntity().getType().equals(Entities.NUCLEAR_EXPLOSION.get())) {
                 event.getEntity().setRemainingFireTicks(20);
             }
         }

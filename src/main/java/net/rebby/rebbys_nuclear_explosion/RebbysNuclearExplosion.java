@@ -52,6 +52,8 @@ public class RebbysNuclearExplosion {
     public RebbysNuclearExplosion(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(Config::onLoad);
+        modEventBus.addListener(Config::onReload);
 
         Entities.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
