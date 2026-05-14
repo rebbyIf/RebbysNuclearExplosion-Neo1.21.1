@@ -19,18 +19,30 @@ uniform int FogShape;
 uniform vec3 Light0_Direction;
 uniform vec3 Light1_Direction;
 
+// Blurring stuff
+uniform vec2 InSize;
+uniform vec2 BlurDir;
+
 out float vertexDistance;
 out vec4 vertexColor;
 out vec2 texCoord0;
 out vec2 texCoord1;
 out vec2 texCoord2;
 
+// Blurring stuff
+out vec2 sampleStep;
+
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
 
     vertexDistance = fog_distance(Position, FogShape);
-    vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color) * texelFetch(Sampler2, UV2 / 16, 0);
+    vertexColor = Color;
+    //vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color) * texelFetch(Sampler2, UV2 / 16, 0);
     texCoord0 = UV0;
     texCoord1 = UV1;
     texCoord2 = UV2;
+
+    // Blurring stuff
+    vec2 oneTexel = 1.0 / InSize;
+    sampleStep = oneTexel * BlurDir;
 }

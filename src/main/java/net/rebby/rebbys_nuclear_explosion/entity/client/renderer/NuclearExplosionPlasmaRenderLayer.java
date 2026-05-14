@@ -27,7 +27,7 @@ public class NuclearExplosionPlasmaRenderLayer extends AutoGlowingGeoLayer<Nucle
     private final InterpolationMethod[] colorEasing = {
             null,
             (Float t) -> (float) (1 - Math.pow(1 - t, 3)),
-            (Float t) -> (float) (1 - Math.pow(1 - t, 2))
+            (Float t) -> (float) (Math.pow(t, 2))
     };
 
     public NuclearExplosionPlasmaRenderLayer(GeoRenderer<NuclearExplosionEntity> renderer) {

@@ -1,7 +1,12 @@
 package net.rebby.rebbys_nuclear_explosion.entity.client.renderer;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.rebby.rebbys_nuclear_explosion.Config;
@@ -10,6 +15,8 @@ import net.rebby.rebbys_nuclear_explosion.entity.custom.NuclearExplosionEntity;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.util.Color;
+
+import static net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosionClient.EXPLOSION_RENDER_TARGET;
 
 public class NuclearExplosionRenderer extends GeoEntityRenderer<NuclearExplosionEntity> {
 
@@ -32,6 +39,13 @@ public class NuclearExplosionRenderer extends GeoEntityRenderer<NuclearExplosion
 
 
 
+
+
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+
+
+
+
+
     }
 }

@@ -7,6 +7,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
@@ -42,6 +45,18 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
     public static final String IS_DETONATING_ID = setNBTId("isDetonating");
     public static final String AGE_ID = setNBTId("age");
 
+    public static final EntityDataAccessor<Boolean> IS_DETONATING =
+            SynchedEntityData.defineId(
+                    NuclearExplosionEntity.class,
+                    EntityDataSerializers.BOOLEAN
+            );
+
+    public static final EntityDataAccessor<Integer> AGE =
+            SynchedEntityData.defineId(
+                    NuclearExplosionEntity.class,
+                    EntityDataSerializers.INT
+            );
+
     protected static final RawAnimation DETONATION_ANIM = RawAnimation.begin()
             .thenPlay("animation.nuclear_explosion.detonate")
             .thenLoop("animation.nuclear_explosion.ambient");
@@ -57,17 +72,20 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
 
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
     private Irradiation irradiation;
-    private int age;
-    private boolean isDetonating;
 
     public NuclearExplosionEntity(EntityType<? extends LivingEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
         Vector3i origin = new Vector3i(blockPosition().getX(), blockPosition().getY(), blockPosition().getZ());
         Vector3i origin1 = origin.sub(1,1,1,new Vector3i());
         irradiation = new Irradiation(origin, origin, origin1, origin, origin1, 0);
-        age = 0;
-        isDetonating = true;
         setNoGravity(true);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(IS_DETONATING, true);
+        builder.define(AGE, 0);
     }
 
     @Override
@@ -102,19 +120,19 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
     }
 
     public boolean isDetonating() {
-        return isDetonating;
+        return getEntityData().get(IS_DETONATING);
     }
 
     public void setDetonating(boolean detonating) {
-        isDetonating = detonating;
+        getEntityData().set(IS_DETONATING, detonating);
     }
 
     public int getAge() {
-        return age;
+        return getEntityData().get(AGE);
     }
 
     public void setAge(int age) {
-        this.age = age;
+        getEntityData().set(AGE, age);
     }
 
     @Override
@@ -157,18 +175,18 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
 
         //System.out.println("Ticking...");
 
-        if (age > 300) {
+        if (getAge() > 300) {
             setInvisible(true);
         }
 
-        if (isDetonating && age > 0) {
-            isDetonating = irradiation.irradiateThreaded((ServerLevel) level());
-            if (age % 3 == 0)
+        if (isDetonating() && getAge() > 0) {
+            setDetonating(irradiation.irradiateThreaded((ServerLevel) level()));
+            if (getAge() % 3 == 0)
                 playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 128.0f, 1.0f);
             //System.out.println(isDetonating);
         }
 
-        if (!isDetonating && age > 300) {
+        if (!isDetonating() && getAge() > 300) {
             for (int x = chunkPosition().x - Config.r0 / 16; x < chunkPosition().x + Config.r0 / 16; x++) {
                 for (int z = chunkPosition().z - Config.r0 / 16; z < chunkPosition().z + Config.r0 / 16; z++) {
                     ((ServerLevel) level()).setChunkForced(x,z,false);
@@ -176,7 +194,7 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
             }
             remove(RemovalReason.DISCARDED);
         }
-        age++;
+        setAge(getAge() + 1);
     }
 
     @Override
@@ -189,9 +207,9 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
         }
 
         if (modData.contains(IS_DETONATING_ID))
-            isDetonating = modData.getBoolean(IS_DETONATING_ID);
+            setDetonating(modData.getBoolean(IS_DETONATING_ID));
         if (modData.contains(AGE_ID))
-            age = modData.getInt(AGE_ID);
+            setAge(modData.getInt(AGE_ID));
 
         super.readAdditionalSaveData(pCompound);
 
@@ -210,8 +228,8 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
         result.resultOrPartial(errorMessage -> LogUtils.getLogger().error("Nuclear Explosion Saving Error: {}", errorMessage))
             .ifPresent(decodedObject -> modData.put(IRRADIATION_ID, decodedObject));
 
-        modData.putBoolean(IS_DETONATING_ID, isDetonating);
-        modData.putInt(AGE_ID, age);
+        modData.putBoolean(IS_DETONATING_ID, isDetonating());
+        modData.putInt(AGE_ID, getAge());
 
         pCompound.put(RebbysNuclearExplosion.MODID, modData);
 
@@ -248,7 +266,7 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
     public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
 
         controllerRegistrar.add(new AnimationController<GeoAnimatable>(this, "Detonating", state -> {
-            if (age < 300) {
+            if (getAge() < 300) {
                 // Add animation later
                 return state.setAndContinue(DETONATION_ANIM);
             }

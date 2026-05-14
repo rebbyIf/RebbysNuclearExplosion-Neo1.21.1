@@ -1,0 +1,32 @@
+{
+  "targets": ["swap"],
+  "passes": [
+    {
+      "name": "rebbys_nuclear_explosion:color_change",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "uniforms": [
+        {
+          "name": "ColorScale",
+          "values": [ 6.0, 6.0, 6.0 ]
+        },
+        {
+          "name": "Saturation",
+          "values": [ 0.0 ]
+        },
+        {
+          "name": "Offset",
+          "values": [ -0.85, -0.85, -0.85 ]
+        }
+      ]
+    },
+    {
+      "name": "blit",
+      "intarget": "swap",
+      "outtarget": "minecraft:main",
+      "uniforms": [
+
+      ]
+    }
+  ]
+}
