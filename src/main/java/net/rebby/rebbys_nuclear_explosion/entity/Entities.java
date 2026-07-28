@@ -23,6 +23,7 @@ public class Entities {
             .updateInterval(1)
             .setShouldReceiveVelocityUpdates(false)
             .sized(4.0f,8.0f)
+            .canSpawnFarFromPlayer()
             .build(NuclearExplosionEntity.ID.toString()));
 
     public static void register(IEventBus bus) {

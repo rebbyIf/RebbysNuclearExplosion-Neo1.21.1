@@ -7,14 +7,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.TicketType;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Unit;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.*;
@@ -24,44 +23,46 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.world.chunk.ForcedChunkManager;
-import net.rebby.rebbys_nuclear_explosion.Config;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
 import net.rebby.rebbys_nuclear_explosion.util.Irradiation;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
 import org.joml.Vector3i;
-import software.bernie.geckolib.animatable.GeoAnimatable;
-import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.util.GeckoLibUtil;
+import org.mesdag.particlestorm.data.molang.MolangExp;
+import org.mesdag.particlestorm.network.EmitterCreationPacketS2C;
 
-public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
+import java.util.function.Consumer;
+
+public class NuclearExplosionEntity extends LivingEntity{
     public static final ResourceLocation ID = RebbysNuclearExplosion.getResource("nuclear_explosion");
 
     public static final String IRRADIATION_ID = setNBTId("irradiation");
     public static final String IS_DETONATING_ID = setNBTId("isDetonating");
     public static final String AGE_ID = setNBTId("age");
 
-    public static final EntityDataAccessor<Boolean> IS_DETONATING =
+    private static final EntityDataAccessor<Boolean> IS_DETONATING =
             SynchedEntityData.defineId(
                     NuclearExplosionEntity.class,
                     EntityDataSerializers.BOOLEAN
             );
 
-    public static final EntityDataAccessor<Integer> AGE =
+    private static final EntityDataAccessor<Integer> AGE =
             SynchedEntityData.defineId(
                     NuclearExplosionEntity.class,
                     EntityDataSerializers.INT
             );
 
-    protected static final RawAnimation DETONATION_ANIM = RawAnimation.begin()
-            .thenPlay("animation.nuclear_explosion.detonate")
-            .thenLoop("animation.nuclear_explosion.ambient");
-    protected static final RawAnimation AMBIENT_ANIM = RawAnimation.begin()
-            .thenLoop("animation.nuclear_explosion.ambient");
+    private static final EntityDataAccessor<Boolean> HAS_CLIENT =
+            SynchedEntityData.defineId(
+                    NuclearExplosionEntity.class,
+                    EntityDataSerializers.BOOLEAN
+            );
+
+    protected static final EntityDataAccessor<Boolean> MARKED_FOR_REMOVAL =
+            SynchedEntityData.defineId(
+                    NuclearExplosionEntity.class,
+                    EntityDataSerializers.BOOLEAN
+            );
 
     private static String setNBTId(String name) {
         return name;
@@ -70,7 +71,6 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
     private final NonNullList<ItemStack> handItems = NonNullList.withSize(2, ItemStack.EMPTY);
     private final NonNullList<ItemStack> armorItems = NonNullList.withSize(4, ItemStack.EMPTY);
 
-    private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
     private Irradiation irradiation;
 
     public NuclearExplosionEntity(EntityType<? extends LivingEntity> pEntityType, Level pLevel) {
@@ -79,6 +79,33 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
         Vector3i origin1 = origin.sub(1,1,1,new Vector3i());
         irradiation = new Irradiation(origin, origin, origin1, origin, origin1, 0);
         setNoGravity(true);
+        this.noCulling = true;
+        this.noPhysics = true;
+    }
+
+    @Override
+    public void onAddedToLevel() {
+        super.onAddedToLevel();
+        if (!level().isClientSide) {
+            ((ServerLevel) level()).getPlayers(serverPlayer -> {
+                boolean f = serverPlayer.distanceTo(this) < 1000;
+                if (f) {
+                    EmitterCreationPacketS2C.sendToClient(serverPlayer,
+                            RebbysNuclearExplosion.getResource("nuclear_explosion"),
+                            new Vector3f((float) getX(), (float) getY(), (float) getZ()),
+                            MolangExp.EMPTY,
+                            null);
+                }
+                return f;
+            });
+        }
+    }
+
+    @Override
+    public void sendPairingData(@NotNull ServerPlayer serverPlayer, @NotNull Consumer<CustomPacketPayload> bundleBuilder) {
+        super.sendPairingData(serverPlayer, bundleBuilder);
+
+
     }
 
     @Override
@@ -86,6 +113,8 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
         super.defineSynchedData(builder);
         builder.define(IS_DETONATING, true);
         builder.define(AGE, 0);
+        builder.define(HAS_CLIENT, false);
+        builder.define(MARKED_FOR_REMOVAL, false);
     }
 
     @Override
@@ -135,6 +164,25 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
         getEntityData().set(AGE, age);
     }
 
+    public boolean hasClient() {
+        return getEntityData().get(HAS_CLIENT);
+    }
+
+    public void setHasClient(boolean hasClient) {
+        getEntityData().set(HAS_CLIENT, hasClient);
+    }
+
+    public boolean markedForRemoval() {
+        return getEntityData().get(MARKED_FOR_REMOVAL);
+    }
+
+    public void remove(@NotNull RemovalReason reason) {
+        if (!level().isClientSide) {
+            getEntityData().set(MARKED_FOR_REMOVAL, true);
+        }
+        super.remove(reason);
+    }
+
     @Override
     public boolean isInvulnerableTo(DamageSource pSource) {
         return !pSource.is(DamageTypes.GENERIC_KILL);
@@ -167,7 +215,12 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
     public void tick() {
         super.tick();
 
-        if (level().isClientSide || irradiation == null) {
+        if (level().isClientSide) {
+            //System.out.println(getAge());
+            return;
+        }
+
+        if (irradiation == null) {
             return;
         }
 
@@ -175,23 +228,18 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
 
         //System.out.println("Ticking...");
 
-        if (getAge() > 300) {
+        if (getAge() > 460) {
             setInvisible(true);
         }
 
         if (isDetonating() && getAge() > 0) {
-            setDetonating(irradiation.irradiateThreaded((ServerLevel) level()));
-            if (getAge() % 3 == 0)
-                playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 128.0f, 1.0f);
+            setDetonating(irradiation.irradiateThreaded((ServerLevel) level(), this));
+//            if (getAge() % 3 == 0)
+//                playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 128.0f, 1.0f);
             //System.out.println(isDetonating);
         }
 
-        if (!isDetonating() && getAge() > 300) {
-            for (int x = chunkPosition().x - Config.r0 / 16; x < chunkPosition().x + Config.r0 / 16; x++) {
-                for (int z = chunkPosition().z - Config.r0 / 16; z < chunkPosition().z + Config.r0 / 16; z++) {
-                    ((ServerLevel) level()).setChunkForced(x,z,false);
-                }
-            }
+        if (!isDetonating() && getAge() > 460) {
             remove(RemovalReason.DISCARDED);
         }
         setAge(getAge() + 1);
@@ -262,21 +310,4 @@ public class NuclearExplosionEntity extends LivingEntity implements GeoEntity {
         return HumanoidArm.RIGHT;
     }
 
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
-
-        controllerRegistrar.add(new AnimationController<GeoAnimatable>(this, "Detonating", state -> {
-            if (getAge() < 300) {
-                // Add animation later
-                return state.setAndContinue(DETONATION_ANIM);
-            }
-            return state.setAndContinue(AMBIENT_ANIM);
-        }));
-
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return geoCache;
-    }
 }

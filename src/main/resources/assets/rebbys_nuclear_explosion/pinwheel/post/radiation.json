@@ -1,0 +1,11 @@
+{
+  "stages": [
+    {
+      "type": "veil:blit",
+      "shader": "rebbys_nuclear_explosion:radiation",
+      "in": "minecraft:main",
+      "out": "veil:post"
+    }
+  ],
+  "renderStage": "after_level"
+}

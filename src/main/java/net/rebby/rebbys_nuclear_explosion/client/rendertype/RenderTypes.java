@@ -2,6 +2,11 @@ package net.rebby.rebbys_nuclear_explosion.client.rendertype;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import foundry.veil.api.client.render.VeilRenderSystem;
+import foundry.veil.api.client.render.VeilShaderBufferLayout;
+import foundry.veil.api.client.render.shader.program.ShaderProgram;
+import foundry.veil.api.client.render.shader.uniform.ShaderUniformAccess;
+import foundry.veil.api.event.VeilPostProcessingEvent;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PostChain;
@@ -9,6 +14,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
@@ -22,16 +28,20 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+@OnlyIn(Dist.CLIENT)
 public class RenderTypes {
 
     public static final ResourceLocation RADIATION_SHADER_LOC = RebbysNuclearExplosion.getResource("shaders/post/radiation.json");
+    public static final ResourceLocation DARKENING_SHADER_LOC = RebbysNuclearExplosion.getResource("shaders/post/darkening.json");
 
-    public static PostChain RADIATION_CHAIN;
+    public static final PostChain RADIATION_CHAIN;
+    public static final PostChain DARKENING_CHAIN;
 
     static {
         Minecraft mc = Minecraft.getInstance();
         try {
             RADIATION_CHAIN = new PostChain(mc.getTextureManager(), mc.getResourceManager(), mc.getMainRenderTarget(), RADIATION_SHADER_LOC);
+            DARKENING_CHAIN = new PostChain(mc.getTextureManager(), mc.getResourceManager(), mc.getMainRenderTarget(), DARKENING_SHADER_LOC);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -70,10 +80,13 @@ public class RenderTypes {
 
         }
 
+
         @SubscribeEvent
         public static void renderRadiationOverlay(RenderLevelStageEvent event){
             Minecraft mc = Minecraft.getInstance();
-            if (event.getStage().equals(RenderLevelStageEvent.Stage.AFTER_LEVEL) &&
+            float renderDistance = mc.gameRenderer.getRenderDistance();
+
+            if ((event.getStage().equals(RenderLevelStageEvent.Stage.AFTER_LEVEL)) &&
                     mc.level != null &&
                     mc.player != null) {
                 AtomicReference<NuclearExplosionEntity> nearestNuke = new AtomicReference<>();
@@ -89,7 +102,7 @@ public class RenderTypes {
                     }
                 });
 
-                if (distance.get() >= 0 && distance.get() < 32 * Config.r) {
+                if (distance.get() >= 0 && distance.get() < renderDistance) {
 
                     // Calculates Timeline of events
                     float mixing = MIXING_VAL[0];
@@ -107,13 +120,18 @@ public class RenderTypes {
                     if (t >= MIXING_POS[MIXING_POS.length - 1])
                         mixing = MIXING_VAL[MIXING_POS.length - 1];
 
-                    // Multiplies mixing by distance.
-                    mixingValue = mixing * (float) (1 - Math.pow(distance.get() / (32 * Config.r), 2));
 
-                    RADIATION_CHAIN.resize(mc.getWindow().getWidth(), mc.getWindow().getHeight());
-                    RADIATION_CHAIN.setUniform("Amount", mixingValue);
-                    RADIATION_CHAIN.process(event.getPartialTick().getRealtimeDeltaTicks());
-                    mc.getMainRenderTarget().bindWrite(false);
+
+                    // Multiplies mixing by distance.
+                    mixingValue = mixing * (float) (1 - Math.pow(distance.get() / renderDistance, 2));
+
+
+
+//                    PostChain chain = RADIATION_CHAIN;
+//                    chain.resize(mc.getWindow().getWidth(), mc.getWindow().getHeight());
+//                    chain.setUniform("Amount", mixingValue);
+//                    chain.process(event.getPartialTick().getRealtimeDeltaTicks());
+//                    mc.getMainRenderTarget().bindWrite(true);
 
 
 

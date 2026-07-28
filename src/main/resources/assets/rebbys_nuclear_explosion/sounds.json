@@ -1,0 +1,10 @@
+{
+  "nuclear_explosion.ambience": {
+    "sounds": [
+      {
+        "name": "rebbys_nuclear_explosion:nuclear_explosion/ambience",
+        "stream": true
+      }
+    ]
+  }
+}

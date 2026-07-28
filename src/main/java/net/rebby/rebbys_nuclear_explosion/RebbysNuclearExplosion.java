@@ -1,6 +1,9 @@
 package net.rebby.rebbys_nuclear_explosion;
 
 import net.minecraft.resources.ResourceLocation;
+import net.rebby.rebbys_nuclear_explosion.client.Sounds;
+import net.rebby.rebbys_nuclear_explosion.client.particle.ModParticleTypes;
+import net.rebby.rebbys_nuclear_explosion.client.rendertype.PostProcessing;
 import net.rebby.rebbys_nuclear_explosion.entity.Entities;
 import org.slf4j.Logger;
 
@@ -56,6 +59,10 @@ public class RebbysNuclearExplosion {
         modEventBus.addListener(Config::onReload);
 
         Entities.register(modEventBus);
+        Sounds.register(modEventBus);
+        ModParticleTypes.register(modEventBus);
+
+        PostProcessing.processing();
         // Register the Deferred Register to the mod event bus so tabs get registered
         //CREATIVE_MODE_TABS.register(modEventBus);
 

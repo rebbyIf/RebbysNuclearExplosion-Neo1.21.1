@@ -7,20 +7,8 @@
       "outtarget": "swap",
       "uniforms": [
         {
-          "name": "ColorScale",
-          "values": [ 2.0, 2.0, 2.0 ]
-        },
-        {
-          "name": "RedMatrix",
-          "values": [ 0.0, 0.0, 0.0 ]
-        },
-        {
-          "name": "BlueMatrix",
-          "values": [ 0.0, 0.0, 0.0 ]
-        },
-        {
           "name": "Offset",
-          "values": [ 0, 0, 0 ]
+          "values": [ -1, -1, -1 ]
         }
       ]
     },

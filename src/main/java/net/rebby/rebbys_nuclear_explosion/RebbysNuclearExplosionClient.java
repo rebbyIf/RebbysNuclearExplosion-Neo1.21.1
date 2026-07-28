@@ -15,7 +15,6 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.rebby.rebbys_nuclear_explosion.entity.Entities;
-import net.rebby.rebbys_nuclear_explosion.entity.client.renderer.NuclearExplosionRenderer;
 
 import java.io.IOException;
 
@@ -24,13 +23,6 @@ import java.io.IOException;
 // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
 @EventBusSubscriber(modid = RebbysNuclearExplosion.MODID, value = Dist.CLIENT)
 public class RebbysNuclearExplosionClient {
-
-    public static final RenderTarget RADIATION_RENDER_TARGET = new TextureTarget(
-            Minecraft.getInstance().getWindow().getWidth(),
-            Minecraft.getInstance().getWindow().getWidth(), true, Minecraft.ON_OSX);
-    public static final RenderTarget EXPLOSION_RENDER_TARGET = new TextureTarget(
-            Minecraft.getInstance().getWindow().getWidth(),
-            Minecraft.getInstance().getWindow().getWidth(), true, Minecraft.ON_OSX);
 
 
 
@@ -51,6 +43,7 @@ public class RebbysNuclearExplosionClient {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(Entities.NUCLEAR_EXPLOSION.get(), NuclearExplosionRenderer::new);
+//        event.registerEntityRenderer(Entities.NUCLEAR_EXPLOSION.get(), NuclearExplosionRenderer::new);
+//        event.registerEntityRenderer(Entities.DISTANT_NUCLEAR_EXPLOSION.get(), NuclearExplosionRenderer::new);
     }
 }

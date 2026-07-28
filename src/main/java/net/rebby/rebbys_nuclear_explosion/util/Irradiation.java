@@ -5,20 +5,18 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.rebby.rebbys_nuclear_explosion.Config;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
 import org.joml.Vector3f;
@@ -49,12 +47,8 @@ public class Irradiation {
 
     private static final BlockState COBBLE_BLOCK_STATE = getDefaultBlockState("minecraft:cobblestone");
     private static final BlockState AIR_BLOCK_STATE = getDefaultBlockState("minecraft:air");
-    private static final BlockState FIRE_BLOCK_STATE = getDefaultBlockState("minecraft:fire");
-    private static final BlockState BLACK_GLASS_BLOCK_STATE = getDefaultBlockState("minecraft:black_stained_glass");
-    private static final BlockState DIAMOND_BLOCK_STATE = getDefaultBlockState("minecraft:deepslate_diamond_ore");
-    private static final BlockState AUTUNITE_BLOCK_STATE = getDefaultBlockState("createnuclear:autunite");
+
     private static final BlockState WATER_LIQUID_STATE = getDefaultBlockState("minecraft:water");
-    private static final BlockState URANIUM_BLOCK_STATE = getDefaultBlockState("createnuclear:uranium");
 
     private static final int SURFACE_SCAN_Y = 8;
 
@@ -72,11 +66,11 @@ public class Irradiation {
         threads = new Thread[Config.maxExplosionThreads];
     }
 
-    private static BlockState getDefaultBlockState(String blockId) {
+    public static BlockState getDefaultBlockState(String blockId) {
         return getDefaultBlockState(ResourceLocation.parse(blockId));
     }
 
-    private static BlockState getDefaultBlockState(ResourceLocation blockId) {
+    public static BlockState getDefaultBlockState(ResourceLocation blockId) {
         return BuiltInRegistries.BLOCK.get(blockId).defaultBlockState();
 
     }
@@ -151,7 +145,7 @@ public class Irradiation {
         return threadX;
     }
 
-    public boolean irradiateThreaded(ServerLevel level) {
+    public boolean irradiateThreaded(ServerLevel level, Entity source) {
 
         if (origin.y + 3 > level.getMaxBuildHeight() || origin.y - 3 < level.getMinBuildHeight())
             return false;
@@ -173,11 +167,17 @@ public class Irradiation {
                 if (xzBeyondR2 && x >= innerMin.x && x < innerMax.x && z == innerMin.z)
                     z = innerMax.z;
 
+                if (x % 16 == 0 && z % 16 == 0) {
+
+                    level.setChunkForced(x > origin.x ? x >> 4 : (x >> 4) - 1,
+                            z > origin.z ? z >> 4 : (z >> 4) - 1, true);
+                }
+
 
                 Vector3f centerYPos = new Vector3f(x, origin.y, z);
                 xzBeyondR2 = centerYPos.distance(origin.x, origin.y, origin.z) > Config.r2;
                 String xz = x + "," + z;
-                yMap.put(xz, level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z));
+                yMap.put(xz, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z));
                 int loopYMax = xzBeyondR2 ? yMap.get(xz)
                         + SURFACE_SCAN_Y / 2 : outerMax.y;
                 loopYMax = Math.min(loopYMax, level.getMaxBuildHeight() - 1);
@@ -227,6 +227,24 @@ public class Irradiation {
         if (added) {
             innerMax = new Vector3i(outerMax);
             innerMin = new Vector3i(outerMin);
+
+            double currentR = innerMax.x - origin.x;
+            double step = Math.asin(Config.explosionStep / currentR);
+
+            if (currentR % Config.explosionStep == 0){
+                for (double angle = 0; angle < Math.PI * 2; angle += step) {
+                    double x = origin.x + currentR * Math.cos(angle);
+                    double z = origin.z + currentR * Math.sin(angle);
+                    level.explode(
+                            source,
+                            x,
+                            level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) x, (int) z),
+                            z,
+                            (float) (Config.maxExplosionPower * Math.pow((Config.r0 - currentR) / (Config.r0 - Config.r2), 2)),
+                            Level.ExplosionInteraction.NONE
+                    );
+                }
+            }
         }
 
         return innerMax.x - origin.x < Config.r0;
@@ -272,7 +290,7 @@ public class Irradiation {
                         boolean changeBlockStateUp = false;
 
 
-                        if (blockState == null || blockStateUp == null || blockState.isAir() || blockState.equals(FIRE_BLOCK_STATE)) {
+                        if (blockState == null || blockStateUp == null || blockState.isAir() || blockState.equals(Config.fireBlockState)) {
                             continue;
                         }
 
@@ -287,18 +305,17 @@ public class Irradiation {
 
                         if (distance <= Config.r0 &&
                                 isExposed(blockPos, blocks)){
-                            if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/ice")) {
+                            if (checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_melts/ice")) {
                                 blockState = WATER_LIQUID_STATE;
                                 changeBlockState = true;
                                 //level.getServer().execute(new SetBlockTask(level, blockPos, WATER_LIQUID_STATE));
                             }
-                            if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_burns_away")) {
-                                blockStateUp = FIRE_BLOCK_STATE;
+
+                            if (((FireBlock)Blocks.FIRE).getBurnOdds(blockState) > 5 && blockStateUp.isAir()) {
+                                blockStateUp = Config.fireBlockState;
                                 changeBlockStateUp = true;
-                                //level.getServer().execute( new SetBlockTask(level, blockPos.above(), FIRE_BLOCK_STATE));
-                                //block.set("minecraft:coal_block");
                             }
-                            if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_vaporizes/snow")) {
+                            if (checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_vaporizes/snow")) {
                                 //block.set("minecraft:air");
                                 blockState = AIR_BLOCK_STATE;
                                 changeBlockState = true;
@@ -313,21 +330,30 @@ public class Irradiation {
                             //level.getServer().execute(new SetBlockTask(level, blockPos, COAL_BLOCK_STATE));
                         }
                         if (distance <= Config.r1){
-                            if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_vaporizes/liquid")
-                                    || checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/ice")) {
+                            if (checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_vaporizes/liquid")
+                                    || checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_melts/ice")) {
                                 blockState = AIR_BLOCK_STATE;
                                 changeBlockState = true;
                                 //level.getServer().execute(new SetBlockTask(level, blockPos, AIR_BLOCK_STATE));
                             }
 
-                            if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/sand") && isExposed(blockPos, blocks)) {
-                                blockState = BLACK_GLASS_BLOCK_STATE;
+                            if (checkBlockStateHasTag(blockState, "rebbys_nuclear_explosion:nuke_burns/grass") && isExposed(blockPos, blocks)){
+                                blockState = Config.scorchedGrassBlockState;
+                                changeBlockState = true;
+                            }
+                            if (checkBlockStateHasTag(blockState, "rebbys_nuclear_explosion:nuke_burns/moss") && isExposed(blockPos, blocks)){
+                                blockState = Config.scorchedMossBlockState;
+                                changeBlockState = true;
+                            }
+
+                            if (checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_melts/sand") && isExposed(blockPos, blocks)) {
+                                blockState = Config.meltedGlassBlockState;
                                 changeBlockState = true;
                                 //level.getServer().execute(new SetBlockTask(level, blockPos, BLACK_GLASS_BLOCK_STATE));
                             }
 
                             if (blockStateUp.isAir()) {
-                                blockStateUp = FIRE_BLOCK_STATE;
+                                blockStateUp = Config.fireBlockState;
                                 changeBlockStateUp = true;
                                 //level.getServer().execute(new SetBlockTask(level, blockPos.above(), FIRE_BLOCK_STATE));
                             }
@@ -340,26 +366,26 @@ public class Irradiation {
                         if (distance <= Config.r2){
 
 
-                            if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_melts/sand")) {
-                                blockState = BLACK_GLASS_BLOCK_STATE;
+                            if (checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_melts/sand")) {
+                                blockState = Config.meltedGlassBlockState;
                                 changeBlockState = true;
                                 //level.getServer().execute(new SetBlockTask(level, blockPos, BLACK_GLASS_BLOCK_STATE));
                             }
 
-                            if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_diamondizes")) {
-                                blockState = DIAMOND_BLOCK_STATE;
+                            if (checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_diamondizes")) {
+                                blockState = Config.diamondizedBlockState;
                                 changeBlockState = true;
                                 //level.getServer().execute(new SetBlockTask(level, blockPos, DIAMOND_BLOCK_STATE));
                             }
 
-                            if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_irradiates")) {
-                                blockState = AUTUNITE_BLOCK_STATE;
+                            if (checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_irradiates")) {
+                                blockState = Config.irradiatedBlockState;
                                 changeBlockState = true;
                                 //level.getServer().execute(new SetBlockTask(level, blockPos, AUTUNITE_BLOCK_STATE));
                             }
 
-                            if (checkBlockStateHasTag(blockState,"frozen_wasteland:nuke_irradiates/liquid")) {
-                                blockState = URANIUM_BLOCK_STATE;
+                            if (checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_irradiates/liquid")) {
+                                blockState = Config.irradiatedLiquidState;
                                 changeBlockState = true;
                                 //level.getServer().execute(new SetBlockTask(level, blockPos, URANIUM_BLOCK_STATE));
                             }
