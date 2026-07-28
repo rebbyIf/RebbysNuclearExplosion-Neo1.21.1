@@ -54,6 +54,8 @@ public class RebbysNuclearExplosion {
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public RebbysNuclearExplosion(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
+
+
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(Config::onLoad);
         modEventBus.addListener(Config::onReload);
@@ -75,7 +77,7 @@ public class RebbysNuclearExplosion {
         //modEventBus.addListener(this::addCreative);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modContainer.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

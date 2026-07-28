@@ -5,7 +5,6 @@ import net.minecraft.client.particle.*;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.rebby.rebbys_nuclear_explosion.Config;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,7 @@ public class DebrisParticle extends TextureSheetParticle {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.spriteSet = spriteSet;
         this.gravity = 0;
-        this.setSize(Config.nukeModelSize*10.0f, Config.nukeModelSize*10.0f);
+        //this.setSize(Config.nukeModelSize*10.0f, Config.nukeModelSize*10.0f);
         this.xd = 0;
         this.yd = 0;
         this.zd = 0;

@@ -19,7 +19,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.rebby.rebbys_nuclear_explosion.Config;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
 import net.rebby.rebbys_nuclear_explosion.entity.custom.NuclearExplosionEntity;
 import net.rebby.rebbys_nuclear_explosion.util.InterpolationMethod;

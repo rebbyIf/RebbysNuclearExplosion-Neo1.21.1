@@ -37,9 +37,6 @@ import org.joml.Vector3i;
 
 import java.util.List;
 
-import static net.rebby.rebbys_nuclear_explosion.Config.r;
-import static net.rebby.rebbys_nuclear_explosion.Config.r3;
-
 
 public class ModEvents {
 
@@ -102,18 +99,18 @@ public class ModEvents {
                     Vector3i origin1 = origin.sub(1, 1, 1, new Vector3i());
                     entity.setIrradiation(new Irradiation(origin, origin, origin1, origin, origin1, 0));
 
-                    Vec3 dim = new Vec3(r, r, r);
+                    Vec3 dim = new Vec3(Config.r, Config.r, Config.r);
                     Vec3 o = new Vec3(origin.x, origin.y, origin.z);
                     AABB damageArea = new AABB(o.add(dim), o.subtract(dim));
 
                     // Gets entities to damage
                     List<Entity> entities = event.getLevel().getEntities((Entity) null, damageArea, entity1 -> {
-                        if (entity1.distanceTo(entity) < r3) {
+                        if (entity1.distanceTo(entity) < Config.r3) {
                             return true;
                         }
                         Vec3 eyePos = entity1.getEyePosition();
                         ClipContext context = new ClipContext(o, eyePos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity);
-                        return entity1.distanceTo(entity) < r &&
+                        return entity1.distanceTo(entity) < Config.r &&
                                 event.getLevel().clip(context).getType() == HitResult.Type.MISS;
                     });
 
@@ -125,7 +122,7 @@ public class ModEvents {
                                 entity
                         );
                         entity1.hurt(source, (float) Math.pow((Config.r3 - distance)/10, 2));
-                        entity1.setRemainingFireTicks((int) (Math.pow((r3 - distance)/10, 2) * 5));
+                        entity1.setRemainingFireTicks((int) (Math.pow((Config.r3 - distance)/10, 2) * 5));
                     }
 
                     entity.playSound(Sounds.NUCLEAR_EXPLOSION_AMBIENCE.value(), 128.0f,1.0f);
