@@ -1,8 +1,6 @@
 package net.rebby.rebbys_nuclear_explosion.event;
 
 import foundry.veil.api.client.render.VeilRenderSystem;
-import foundry.veil.api.event.VeilPostProcessingEvent;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -19,16 +17,10 @@ import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
-import net.neoforged.neoforge.network.registration.HandlerThread;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.rebby.rebbys_nuclear_explosion.Config;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
 import net.rebby.rebbys_nuclear_explosion.client.Sounds;
-import net.rebby.rebbys_nuclear_explosion.client.particle.DebrisParticle;
-import net.rebby.rebbys_nuclear_explosion.client.particle.ModParticleTypes;
-import net.rebby.rebbys_nuclear_explosion.client.rendertype.PostProcessing;
+import net.rebby.rebbys_nuclear_explosion.client.rendering.PostProcessing;
 import net.rebby.rebbys_nuclear_explosion.entity.Entities;
 import net.rebby.rebbys_nuclear_explosion.entity.custom.NuclearExplosionEntity;
 import net.rebby.rebbys_nuclear_explosion.entity.render.NuclearExplosionRenderer;
@@ -42,11 +34,6 @@ public class ModEvents {
 
     @EventBusSubscriber(value = Dist.CLIENT, modid = RebbysNuclearExplosion.MODID)
     public static class ClientEvents {
-
-        @SubscribeEvent // on the mod event bus only on the physical client
-        public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
-            event.registerSpriteSet(ModParticleTypes.DEBRIS_PARTICLE_TYPE.get(), DebrisParticle.Provider::new);
-        }
 
         @SubscribeEvent // on the mod event bus only on the physical client
         public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {

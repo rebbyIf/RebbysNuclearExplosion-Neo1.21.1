@@ -1,28 +1,26 @@
-package net.rebby.rebbys_nuclear_explosion.client.rendertype;
+package net.rebby.rebbys_nuclear_explosion.client.rendering;
 
+import com.ibm.icu.impl.Pair;
 import foundry.veil.api.client.render.VeilRenderSystem;
 import foundry.veil.api.client.render.shader.uniform.ShaderUniformAccess;
 import foundry.veil.platform.VeilEventPlatform;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
 import net.rebby.rebbys_nuclear_explosion.entity.custom.NuclearExplosionEntity;
-import net.rebby.rebbys_nuclear_explosion.util.InterpolationMethod;
+import net.rebby.rebbys_nuclear_explosion.util.Timeline;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class PostProcessing {
 
-    private static final int[] MIXING_POS = {0, 40, 460};
+    private static final Timeline FACTOR_0 = new Timeline(1)
+            .pushEntry(Pair.of(40.0f,new Float[]{1.0f}), Timeline.InterpolationMethod.CUBIC_EASE_IN)
+            .pushEntry(Pair.of(460.0f,new Float[]{0.0f}), Timeline.InterpolationMethod.EASE_OUT);
 
-    private static final float[] MIXING_VAL = {0.0f, 1.0f, 0.0f};
-
-    private static final InterpolationMethod[] MIXING_EASING = {
-            null,
-            (Float t) -> (float) (1 - Math.pow(1 - t, 3)),
-            (Float t) -> (float) (Math.pow(t, 2))
-    };
+    private static final Timeline FACTOR_1 = new Timeline(1)
+            .pushEntry(Pair.of(5.0f,new Float[]{1.0f}), Timeline.InterpolationMethod.CUBIC_EASE_IN)
+            .pushEntry(Pair.of(160.0f,new Float[]{0.0f}), Timeline.InterpolationMethod.EASE_OUT);
 
     public static final ResourceLocation RADIATION_POST_PIPELINE = RebbysNuclearExplosion.getResource("radiation");
     public static final ResourceLocation DARKEN_SKY_POST_PIPELINE = RebbysNuclearExplosion.getResource("darken_sky");
@@ -32,7 +30,7 @@ public final class PostProcessing {
         VeilEventPlatform.INSTANCE.preVeilPostProcessing((pipelineName, pipeline, context) -> {
             Minecraft mc = Minecraft.getInstance();
             float renderDistance = mc.gameRenderer.getRenderDistance();
-            float mixingValue = 0.0f;
+            float factor0 = 0.0f, factor1 = 0.0f;
             if (mc.level != null &&
                     mc.player != null) {
                 AtomicReference<NuclearExplosionEntity> nearestNuke = new AtomicReference<>();
@@ -51,25 +49,16 @@ public final class PostProcessing {
                 if (distance.get() >= 0) {
 
                     // Calculates Timeline of events
-                    float mixing = MIXING_VAL[0];
-                    float t = nearestNuke.get().getAge();
+                    float mixing0 = FACTOR_0.interpolate(nearestNuke.get().getAge())[0];
+                    float mixing1 = FACTOR_1.interpolate(nearestNuke.get().getAge())[0];
 
-                    for (int i = 1; i < MIXING_POS.length; i++) {
-                        if (t < MIXING_POS[i] && t >= MIXING_POS[i-1]) {
-                            float t0 = t - MIXING_POS[i-1];
-                            float easedT = MIXING_EASING[i].run(t0 / (MIXING_POS[i] - MIXING_POS[i-1]));
-                            mixing = ((MIXING_VAL[i] - MIXING_VAL[i-1]) * easedT) + MIXING_VAL[i-1];
-                            break;
-                        }
-                    }
-
-                    if (t >= MIXING_POS[MIXING_POS.length - 1])
-                        mixing = MIXING_VAL[MIXING_POS.length - 1];
+                    //RebbysNuclearExplosion.LOGGER.info("Nuke age is {}", nearestNuke.get().getAge());
 
 
 
-                    // Multiplies mixing by distance.
-                    mixingValue = mixing * (float) (1 - Math.pow(distance.get() / renderDistance, 2));
+                    // Multiplies mixing0 by distance.
+                    factor0 = mixing0 * (float) (1 - Math.pow(distance.get() / renderDistance, 2));
+                    factor1 = mixing1;
 
                 } else {
                     VeilRenderSystem.renderer().getPostProcessingManager().remove(RADIATION_POST_PIPELINE);
@@ -79,16 +68,18 @@ public final class PostProcessing {
 
             if (RADIATION_POST_PIPELINE.equals(pipelineName)
                 || DARKEN_SKY_POST_PIPELINE.equals(pipelineName)) {
-                ShaderUniformAccess factor = pipeline.getUniform("Factor");
+                ShaderUniformAccess factor = pipeline.getUniform("Factor0");
                 if (factor != null) {
-                    factor.setFloat(mixingValue);
+                    factor.setFloat(factor0);
 
                 }
+            }
 
-                ShaderUniformAccess colorModulation = pipeline.getUniform("ColorModulation");
+            if (RADIATION_POST_PIPELINE.equals(pipelineName)) {
+                ShaderUniformAccess factor = pipeline.getUniform("Factor1");
+                if (factor != null) {
+                    factor.setFloat(factor1);
 
-                if (colorModulation != null) {
-                    colorModulation.setVector(0,2,0,1);
                 }
             }
         });

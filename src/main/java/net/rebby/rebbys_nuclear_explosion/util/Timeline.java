@@ -10,13 +10,13 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Timeline {
-    private List<Pair<Float, Float[]>> entries;
-    private List<InterpolationMethod> interpolationMethods;
-    private int dimensionality;
+    private final List<Pair<Float, Float[]>> entries;
+    private final List<InterpolationMethod> interpolationMethods;
+    private final int dimensionality;
 
     public Timeline(int dimensionality) {
-        Pair<Float, Float[]> initialValue = Pair.of(0.0f, new Float[dimensionality]);
-        new Timeline(dimensionality, initialValue);
+        this(dimensionality, Pair.of(0.0f, new Float[dimensionality]));
+        entries.getFirst().second[0] = 0.0f;
     }
 
     public Timeline(Pair<Float, Float[]> initialValue) {
@@ -26,7 +26,7 @@ public class Timeline {
         interpolationMethods = new ArrayList<>();
     }
 
-    public Timeline(int dimensionality, Pair<Float, Float[]> initialValue) {
+    private Timeline(int dimensionality, Pair<Float, Float[]> initialValue) {
         this.dimensionality = dimensionality;
         this.entries = new ArrayList<>();
         entries.add(initialValue);
@@ -35,28 +35,23 @@ public class Timeline {
 
     public Timeline pushEntry(@NotNull Pair<Float, Float[]> entry, @NotNull InterpolationMethod interpolationMethod) {
         if (entry.second.length != dimensionality) {
-            throw new ClassCastException("Cannot add entry since it's value is not of the same dimensionality!");
+            throw new ClassCastException("Cannot add entry since "+entry.second.length+ " is not of the same dimensionality "+dimensionality);
         }
         entries.add(entry);
         interpolationMethods.add(interpolationMethod);
-        entries.sort((e1, e2) -> e2.first.compareTo(e1.first));
+        entries.sort(Comparator.comparing(e -> e.first));
         return this;
     }
 
     public Float[] interpolate(float t) {
-        Comparator<Pair<Float, Float[]>> c = new Comparator<Pair<Float, Float[]>>() {
-            @Override
-            public int compare(Pair<Float, Float[]> o1, Pair<Float, Float[]> o2) {
-                return o2.first.compareTo(o1.first);
-            }
-        };
+        Comparator<Pair<Float, Float[]>> c = Comparator.comparing(o -> o.first);
 
         int index = Collections.binarySearch(entries, Pair.of(t, new Float[]{}), c);
         index = index < 0 ? index * -1 - 1 : index;
 
         if (index == 0) {
             return entries.getFirst().second.clone();
-        }if (index == entries.size()) {
+        } else if (index == entries.size()) {
             return entries.getLast().second.clone();
         }
 
@@ -67,7 +62,7 @@ public class Timeline {
         for (int d = 0; d < dimensionality; d++) {
             interpolated[d] = ((entries.get(index).second[d] - entries.get(index-1).second[d]) * easedT) + entries.get(index-1).second[d];
         }
-        return interpolated;
+        return interpolated.clone();
     }
 
     public interface InterpolationMethod {
@@ -77,5 +72,7 @@ public class Timeline {
         InterpolationMethod LINEAR = t -> t;
         InterpolationMethod EASE_IN = t -> t * t;
         InterpolationMethod EASE_OUT = t -> (float) (1 - Math.sqrt(1 - t));
+        InterpolationMethod CUBIC_EASE_IN = t -> t * t * t;
+        InterpolationMethod CUBIC_EASE_OUT = t -> (float) (1 - Math.pow(1 - t, 3));
     }
 }
