@@ -231,7 +231,7 @@ public class Irradiation {
             double currentR = innerMax.x - origin.x;
             double step = Math.asin(Config.explosionStep / currentR);
 
-            if (currentR % Config.explosionStep == 0){
+            if (currentR % Config.explosionStep == 0 && currentR > Config.r3){
                 for (double angle = 0; angle < Math.PI * 2; angle += step) {
                     double x = origin.x + currentR * Math.cos(angle);
                     double z = origin.z + currentR * Math.sin(angle);
