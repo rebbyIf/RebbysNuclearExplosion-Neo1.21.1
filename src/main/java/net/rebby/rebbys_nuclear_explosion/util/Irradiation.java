@@ -11,11 +11,13 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.rebby.rebbys_nuclear_explosion.Config;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
@@ -159,6 +161,7 @@ public class Irradiation {
         int width = Math.min(outerMax.x - outerMin.x, threads.length);
         ConcurrentMap<BlockPos, BlockState> detectableBlocks = new ConcurrentHashMap<>();
         ConcurrentMap<String, Integer> yMap = new ConcurrentHashMap<>();
+        ConcurrentMap<ChunkPos, LevelChunk> detectableChunks = new ConcurrentHashMap<>();
 
         boolean xzBeyondR2 = false;
         for (int x = outerMin.x; x < outerMax.x; x++) {
@@ -167,11 +170,19 @@ public class Irradiation {
                 if (xzBeyondR2 && x >= innerMin.x && x < innerMax.x && z == innerMin.z)
                     z = innerMax.z;
 
+                ChunkPos chunkPos = new ChunkPos(x >> 4, z >> 4);
+
+                if (!detectableChunks.containsKey(chunkPos))
+                    detectableChunks.put(chunkPos, level.getChunk(chunkPos.x, chunkPos.z));
+
                 if (x % 16 == 0 && z % 16 == 0) {
 
                     level.setChunkForced(x > origin.x ? x >> 4 : (x >> 4) - 1,
                             z > origin.z ? z >> 4 : (z >> 4) - 1, true);
                 }
+
+                //level.getChunk(x >> 4, z >> 4).setBlockState()
+                //level.getChunk(x >> 4, z >> 4).runPostLoad();
 
 
                 Vector3f centerYPos = new Vector3f(x, origin.y, z);
@@ -214,7 +225,7 @@ public class Irradiation {
                 threadX = (threadX + 1) % width;
 
                 threads[i] = new Thread(new Irradiator(threadX, level, new Vector3i(origin), new Vector3i(outerMin), new Vector3i(outerMax), new Vector3i(innerMin),
-                        new Vector3i(innerMax), detectableBlocks, level.getMinBuildHeight(), level.getMaxBuildHeight(), yMap, RandomSource.createNewThreadLocalInstance()));
+                        new Vector3i(innerMax), detectableBlocks, level.getMinBuildHeight(), level.getMaxBuildHeight(), yMap,detectableChunks, RandomSource.createNewThreadLocalInstance()));
                 threads[i].start();
 
                 if (threadX == 0) {
@@ -252,7 +263,8 @@ public class Irradiation {
 
     private record Irradiator(int threadX, ServerLevel level, Vector3i origin, Vector3i outerMin, Vector3i outerMax,
                               Vector3i innerMin, Vector3i innerMax, ConcurrentMap<BlockPos, BlockState> blocks,
-                              int levelMinY, int levelMaxY, ConcurrentMap<String, Integer> yMap, RandomSource random) implements Runnable {
+                              int levelMinY, int levelMaxY, ConcurrentMap<String, Integer> yMap,
+                              ConcurrentMap<ChunkPos, LevelChunk> detectableChunks, RandomSource random) implements Runnable {
         @Override
         public void run() {
             ConcurrentMap<BlockPos, BlockState> changedBlocks = new ConcurrentHashMap<>(blocks.size() / 9);
@@ -418,7 +430,7 @@ public class Irradiation {
                 }
             }
 
-            level.getServer().execute(new IrradiateTask(level, changedBlocks));
+            level.getServer().execute(new IrradiateTask(level, changedBlocks, detectableChunks));
         }
     }
 }
