@@ -19,6 +19,8 @@ import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.rebby.rebbys_nuclear_explosion.Config;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
 import org.joml.Vector3f;
@@ -246,10 +248,14 @@ public class Irradiation {
                 for (double angle = 0; angle < Math.PI * 2; angle += step) {
                     double x = origin.x + currentR * Math.cos(angle);
                     double z = origin.z + currentR * Math.sin(angle);
+                    double y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) x, (int) z);
+                    if (level.getEntities(source, AABB.ofSize(new Vec3(x,y,z), 64, 64 ,64)).isEmpty()) {
+                        continue;
+                    }
                     level.explode(
                             source,
                             x,
-                            level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) x, (int) z),
+                            y,
                             z,
                             (float) (Config.maxExplosionPower * Math.pow((Config.r0 - currentR) / (Config.r0 - Config.r2), 2)),
                             Level.ExplosionInteraction.NONE

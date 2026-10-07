@@ -1,9 +1,11 @@
 package net.rebby.rebbys_nuclear_explosion.event;
 
+import com.ibm.icu.impl.Pair;
 import foundry.veil.api.client.render.VeilRenderSystem;
+import net.minecraft.data.DataGenerator;
+import net.minecraft.data.PackOutput;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.damagesource.*;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
@@ -13,7 +15,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
@@ -21,10 +23,13 @@ import net.rebby.rebbys_nuclear_explosion.Config;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
 import net.rebby.rebbys_nuclear_explosion.client.Sounds;
 import net.rebby.rebbys_nuclear_explosion.client.rendering.PostProcessing;
+import net.rebby.rebbys_nuclear_explosion.datagen.ModDamageTypes;
+import net.rebby.rebbys_nuclear_explosion.datagen.ModDatapackProvider;
 import net.rebby.rebbys_nuclear_explosion.entity.Entities;
 import net.rebby.rebbys_nuclear_explosion.entity.custom.NuclearExplosionEntity;
 import net.rebby.rebbys_nuclear_explosion.entity.render.NuclearExplosionRenderer;
 import net.rebby.rebbys_nuclear_explosion.util.Irradiation;
+import net.rebby.rebbys_nuclear_explosion.util.Timeline;
 import org.joml.Vector3i;
 
 import java.util.List;
@@ -44,6 +49,15 @@ public class ModEvents {
 
     @EventBusSubscriber(modid = RebbysNuclearExplosion.MODID)
     public static class ForgeEvents {
+
+        @SubscribeEvent
+        public static void gatherData(GatherDataEvent event){
+            DataGenerator generator = event.getGenerator();
+            PackOutput packOutput = generator.getPackOutput();
+            var lookupProvider = event.getLookupProvider();
+
+            generator.addProvider(event.includeServer(), new ModDatapackProvider(packOutput, lookupProvider));
+        }
 
         @SubscribeEvent
         public static void onEntityLeave(EntityLeaveLevelEvent event) {
@@ -92,24 +106,28 @@ public class ModEvents {
 
                     // Gets entities to damage
                     List<Entity> entities = event.getLevel().getEntities((Entity) null, damageArea, entity1 -> {
-                        if (entity1.distanceTo(entity) < Config.r3) {
+                        if (entity1.distanceTo(entity) < Config.r2) {
                             return true;
                         }
                         Vec3 eyePos = entity1.getEyePosition();
                         ClipContext context = new ClipContext(o, eyePos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity);
                         return entity1.distanceTo(entity) < Config.r &&
-                                event.getLevel().clip(context).getType() == HitResult.Type.MISS;
+                                event.getLevel().clip(context).getType() != HitResult.Type.BLOCK;
                     });
 
+                    Timeline damageTimeline = new Timeline(Pair.of(0.0f, new Float[]{2000.0f}))
+                            .pushEntry(Pair.of((float)Config.r2, new Float[]{1000.0f}), Timeline.InterpolationMethod.CUBIC_EASE_IN)
+                            .pushEntry(Pair.of((float)Config.r1, new Float[]{100.0f}), Timeline.InterpolationMethod.CUBIC_EASE_OUT)
+                            .pushEntry(Pair.of((float)Config.r0, new Float[]{0.0f}), Timeline.InterpolationMethod.EASE_OUT);
                     // Damages them
                     for (Entity entity1 : entities) {
                         float distance = entity1.distanceTo(entity);
+                        float damage = damageTimeline.interpolate(distance)[0];
                         DamageSource source = new DamageSource(
-                                event.getLevel().registryAccess().holderOrThrow(DamageTypes.EXPLOSION),
+                                ModDamageTypes.create(event.getLevel(), ModDamageTypes.RADIATION).typeHolder(),
                                 entity
                         );
-                        entity1.hurt(source, (float) Math.pow((Config.r3 - distance)/10, 2));
-                        entity1.setRemainingFireTicks((int) (Math.pow((Config.r3 - distance)/10, 2) * 5));
+                        entity1.hurt(source, damage);
                     }
 
                     entity.playSound(Sounds.NUCLEAR_EXPLOSION_AMBIENCE.value(), 128.0f,1.0f);
@@ -130,6 +148,8 @@ public class ModEvents {
         public static void entityAttributeEvent(EntityAttributeCreationEvent event) {
             event.put(Entities.NUCLEAR_EXPLOSION.get(), NuclearExplosionEntity.setAttributes());
         }
+
+
 
     }
 }

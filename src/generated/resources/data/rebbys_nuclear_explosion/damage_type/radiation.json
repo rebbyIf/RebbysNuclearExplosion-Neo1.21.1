@@ -1,0 +1,6 @@
+{
+  "effects": "burning",
+  "exhaustion": 20.0,
+  "message_id": "radiation",
+  "scaling": "never"
+}

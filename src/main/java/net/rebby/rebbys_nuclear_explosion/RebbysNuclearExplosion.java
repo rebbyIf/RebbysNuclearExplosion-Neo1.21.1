@@ -46,8 +46,6 @@ public class RebbysNuclearExplosion {
 
         Entities.register(modEventBus);
         Sounds.register(modEventBus);
-
-        PostProcessing.processing();
         // Register the Deferred Register to the mod event bus so tabs get registered
         //CREATIVE_MODE_TABS.register(modEventBus);
 
