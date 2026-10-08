@@ -14,7 +14,7 @@ public record IrradiateTask(ServerLevel level, ConcurrentMap<BlockPos, BlockStat
     @Override
     public void run() {
         for (BlockPos blockPos : blocks.keySet()) {
-            level.setBlock(blockPos, blocks.get(blockPos), 2);
+            level.setBlock(blockPos, blocks.get(blockPos), 3);
 
         }
     }

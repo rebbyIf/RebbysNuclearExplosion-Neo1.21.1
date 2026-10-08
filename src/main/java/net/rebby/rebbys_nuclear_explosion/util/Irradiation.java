@@ -54,7 +54,7 @@ public class Irradiation {
 
     private static final BlockState WATER_LIQUID_STATE = getDefaultBlockState("minecraft:water");
 
-    private static final int SURFACE_SCAN_Y = 8;
+    private static final int SURFACE_SCAN_Y = 16;
 
     private static final List<TagKey<Block>> identifiedTagKeys = new ArrayList<>();
     private static Thread [] threads = null;
@@ -257,14 +257,14 @@ public class Irradiation {
                             x,
                             y,
                             z,
-                            (float) (Config.maxExplosionPower * Math.pow((Config.r0 - currentR) / (Config.r0 - Config.r2), 2)),
+                            (float) (Config.maxExplosionPower * Math.pow((Config.r - currentR) / (Config.r - Config.r2), 2)),
                             Level.ExplosionInteraction.NONE
                     );
                 }
             }
         }
 
-        return innerMax.x - origin.x < Config.r0;
+        return innerMax.x - origin.x < Config.r;
     }
 
     private record Irradiator(int threadX, ServerLevel level, Vector3i origin, Vector3i outerMin, Vector3i outerMax,
@@ -308,13 +308,13 @@ public class Irradiation {
                         boolean changeBlockStateUp = false;
 
 
-                        if (blockState == null || blockStateUp == null || blockState.isAir() || blockState.equals(Config.fireBlockState)) {
+                        if (blockState == null || blockStateUp == null || blockState.isAir() || blockState.equals(Config.fireBlockState)
+                            || checkBlockStateHasTag(blockState,"rebbys_nuclear_explosion:nuke_ignores")) {
                             continue;
                         }
 
                         float distance = pos.distance(origin.x, origin.y, origin.z);
                         float destruction = distance < Config.r3 ? (float) Math.pow((Config.r3 - distance)/4, 2)*1.5f + 2.25f * random.nextFloat() : -1;
-
                         if (blockState.getBlock().defaultDestroyTime() >= 0 &&
                                 blockState.getBlock().defaultDestroyTime() < destruction){
                             changedBlocks.put(blockPos, AIR_BLOCK_STATE);

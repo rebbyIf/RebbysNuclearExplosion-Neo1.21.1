@@ -65,8 +65,8 @@ public class ModEvents {
                 if (event.getLevel().isClientSide) {
                     return;
                 }
-                for (int x = entity.chunkPosition().x - Config.r0 / 16; x < entity.chunkPosition().x + Config.r0 / 16; x++) {
-                    for (int z = entity.chunkPosition().z - Config.r0 / 16; z < entity.chunkPosition().z + Config.r0 / 16; z++) {
+                for (int x = entity.chunkPosition().x - Config.r / 16; x < entity.chunkPosition().x + Config.r / 16; x++) {
+                    for (int z = entity.chunkPosition().z - Config.r / 16; z < entity.chunkPosition().z + Config.r / 16; z++) {
                         ((ServerLevel) event.getLevel()).setChunkForced(x,z,false);
                     }
                 }
@@ -116,8 +116,8 @@ public class ModEvents {
                     });
 
                     Timeline damageTimeline = new Timeline(Pair.of(0.0f, new Float[]{2000.0f}))
-                            .pushEntry(Pair.of((float)Config.r2, new Float[]{1000.0f}), Timeline.InterpolationMethod.CUBIC_EASE_IN)
-                            .pushEntry(Pair.of((float)Config.r1, new Float[]{100.0f}), Timeline.InterpolationMethod.CUBIC_EASE_OUT)
+                            .pushEntry(Pair.of((float)Config.r2, new Float[]{500.0f}), Timeline.InterpolationMethod.CUBIC_EASE_IN)
+                            .pushEntry(Pair.of((float)Config.r1, new Float[]{20.0f}), Timeline.InterpolationMethod.CUBIC_EASE_OUT)
                             .pushEntry(Pair.of((float)Config.r0, new Float[]{0.0f}), Timeline.InterpolationMethod.EASE_OUT);
                     // Damages them
                     for (Entity entity1 : entities) {
