@@ -1,0 +1,51 @@
+{
+  "format": "NEW_ENTITY",
+  "mode": "QUADS",
+  "bufferSize": "TRANSIENT",
+  "layers": [
+    [
+      {
+        "type": "minecraft:transparency",
+        "mode": "translucent"
+      },
+      {
+        "type": "minecraft:write_mask",
+        "depth": false
+      },
+      {
+        "type": "minecraft:cull",
+        "face": "none"
+      },
+      {
+        "type": "veil:shader",
+        "name": "rebbys_nuclear_explosion:core/plasma"
+      },
+      {
+        "type": "minecraft:output",
+        "framebuffer": "minecraft:main"
+      }
+    ],
+    [
+      {
+        "type": "minecraft:transparency",
+        "mode": "translucent"
+      },
+      {
+        "type": "minecraft:write_mask",
+        "depth": false
+      },
+      {
+        "type": "minecraft:cull",
+        "face": "none"
+      },
+      {
+        "type": "veil:shader",
+        "name": "rebbys_nuclear_explosion:core/plasma"
+      },
+      {
+        "type": "minecraft:output",
+        "framebuffer": "rebbys_nuclear_explosion:plasma"
+      }
+    ]
+  ]
+}

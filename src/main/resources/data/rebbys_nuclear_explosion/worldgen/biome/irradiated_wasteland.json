@@ -19,17 +19,11 @@
     },
     "additions_sound": {
       "sound": "minecraft:ambient.basalt_deltas.additions",
-      "tick_chance": 0.111
+      "tick_chance": 0.05
     },
     "sky_color": 13431514,
-    "water_color": 3832426,
-    "water_fog_color": 5077600,
-    "particle": {
-      "options": {
-        "type": "minecraft:ash"
-      },
-      "probability": 0.218093
-    }
+    "water_color": 65280,
+    "water_fog_color": 8453888
   },
   "features": [
     [],
@@ -98,79 +92,13 @@
   "spawn_costs": {},
   "spawners": {
     "ambient": [
-      {
-        "type": "minecraft:bat",
-        "maxCount": 8,
-        "minCount": 8,
-        "weight": 10
-      }
     ],
     "axolotls": [],
     "creature": [],
     "misc": [],
     "monster": [
-      {
-        "type": "minecraft:spider",
-        "maxCount": 4,
-        "minCount": 4,
-        "weight": 100
-      },
-      {
-        "type": "minecraft:zombie",
-        "maxCount": 4,
-        "minCount": 4,
-        "weight": 95
-      },
-      {
-        "type": "minecraft:zombie_villager",
-        "maxCount": 1,
-        "minCount": 1,
-        "weight": 5
-      },
-      {
-        "type": "minecraft:skeleton",
-        "maxCount": 4,
-        "minCount": 4,
-        "weight": 100
-      },
-      {
-        "type": "minecraft:creeper",
-        "maxCount": 4,
-        "minCount": 4,
-        "weight": 100
-      },
-      {
-        "type": "minecraft:slime",
-        "maxCount": 4,
-        "minCount": 4,
-        "weight": 100
-      },
-      {
-        "type": "minecraft:enderman",
-        "maxCount": 4,
-        "minCount": 1,
-        "weight": 10
-      },
-      {
-        "type": "minecraft:witch",
-        "maxCount": 1,
-        "minCount": 1,
-        "weight": 5
-      },
-      {
-        "type": "minecraft:slime",
-        "maxCount": 1,
-        "minCount": 1,
-        "weight": 1
-      }
     ],
     "underground_water_creature": [
-      {
-        "type": "minecraft:glow_squid",
-        "maxCount": 6,
-        "minCount": 4,
-        "weight": 10
-      }
     ],
     "water_ambient": [],
     "water_creature": []

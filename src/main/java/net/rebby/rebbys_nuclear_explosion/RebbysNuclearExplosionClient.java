@@ -16,6 +16,7 @@ import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.rebby.rebbys_nuclear_explosion.client.rendering.PostProcessing;
 import net.rebby.rebbys_nuclear_explosion.entity.Entities;
+import net.rebby.rebbys_nuclear_explosion.entity.render.NuclearExplosionRenderer;
 
 import java.io.IOException;
 
@@ -40,6 +41,7 @@ public class RebbysNuclearExplosionClient {
         RebbysNuclearExplosion.LOGGER.info("HELLO FROM CLIENT SETUP");
         RebbysNuclearExplosion.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
 
+        NuclearExplosionRenderer.init();
         PostProcessing.processing();
 
     }

@@ -22,7 +22,7 @@ public class Entities {
             .setTrackingRange(256)
             .updateInterval(1)
             .setShouldReceiveVelocityUpdates(false)
-            .sized(4.0f,8.0f)
+            .sized(1.0f,1.0f)
             .canSpawnFarFromPlayer()
             .build(NuclearExplosionEntity.ID.toString()));
 

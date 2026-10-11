@@ -1,0 +1,26 @@
+{
+  "modules": [
+    {
+      "strength": -45.0,
+      "module": "veil:gravity"
+    },
+    {
+      "settings": [
+        {
+          "trailPointModifier": 1.0,
+          "trailWidthModifier": 2.0,
+          "trailTexture": "rebbys_nuclear_explosion:textures/particle/spark.png"
+        }
+      ],
+      "module": "veil:trail"
+    }
+  ],
+  "sprite_data": {
+    "sprite": "rebbys_nuclear_explosion:textures/particle/spark.png"
+  },
+  "should_collide": false,
+  "velocity_stretch_factor": 1.0,
+  "render_style": "BILLBOARD",
+  "additive": false,
+  "face_velocity": false
+}

@@ -1,0 +1,8 @@
+{
+  "color_buffers": [
+    {
+      "type": "render_type"
+    }
+  ],
+  "depth": true
+}

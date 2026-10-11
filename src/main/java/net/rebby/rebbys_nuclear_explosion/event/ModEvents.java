@@ -79,10 +79,6 @@ public class ModEvents {
             if (event.getEntity() instanceof NuclearExplosionEntity entity) {
 
                 if (event.getLevel().isClientSide) {
-                    if (!VeilRenderSystem.renderer().getPostProcessingManager().isActive(PostProcessing.RADIATION_POST_PIPELINE))
-                        VeilRenderSystem.renderer().getPostProcessingManager().add(PostProcessing.RADIATION_POST_PIPELINE);
-                    if (!VeilRenderSystem.renderer().getPostProcessingManager().isActive(PostProcessing.DARKEN_SKY_POST_PIPELINE))
-                        VeilRenderSystem.renderer().getPostProcessingManager().add(PostProcessing.DARKEN_SKY_POST_PIPELINE);
                     return;
                 }
 

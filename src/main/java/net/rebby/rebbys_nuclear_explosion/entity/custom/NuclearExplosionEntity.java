@@ -2,6 +2,9 @@ package net.rebby.rebbys_nuclear_explosion.entity.custom;
 
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.DataResult;
+import foundry.veil.api.client.render.VeilRenderSystem;
+import foundry.veil.api.quasar.particle.ParticleEmitter;
+import foundry.veil.api.quasar.particle.ParticleSystemManager;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -21,15 +24,15 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
+import net.rebby.rebbys_nuclear_explosion.entity.render.NuclearExplosionRenderer;
 import net.rebby.rebbys_nuclear_explosion.util.Irradiation;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
-import org.mesdag.particlestorm.data.molang.MolangExp;
-import org.mesdag.particlestorm.network.EmitterCreationPacketS2C;
 
 import java.util.function.Consumer;
 
@@ -47,6 +50,12 @@ public class NuclearExplosionEntity extends LivingEntity{
             );
 
     private static final EntityDataAccessor<Integer> AGE =
+            SynchedEntityData.defineId(
+                    NuclearExplosionEntity.class,
+                    EntityDataSerializers.INT
+            );
+
+    private static final EntityDataAccessor<Integer> R =
             SynchedEntityData.defineId(
                     NuclearExplosionEntity.class,
                     EntityDataSerializers.INT
@@ -86,19 +95,19 @@ public class NuclearExplosionEntity extends LivingEntity{
     @Override
     public void onAddedToLevel() {
         super.onAddedToLevel();
-        if (!level().isClientSide) {
-            ((ServerLevel) level()).getPlayers(serverPlayer -> {
-                boolean f = serverPlayer.distanceTo(this) < 1000;
-                if (f) {
-                    EmitterCreationPacketS2C.sendToClient(serverPlayer,
-                            RebbysNuclearExplosion.getResource("nuclear_explosion"),
-                            new Vector3f((float) getX(), (float) getY(), (float) getZ()),
-                            MolangExp.EMPTY,
-                            null);
-                }
-                return f;
-            });
-        }
+//        if (!level().isClientSide) {
+//            ((ServerLevel) level()).getPlayers(serverPlayer -> {
+//                boolean f = serverPlayer.distanceTo(this) < 1000;
+//                if (f) {
+//                    EmitterCreationPacketS2C.sendToClient(serverPlayer,
+//                            RebbysNuclearExplosion.getResource("nuclear_explosion"),
+//                            new Vector3f((float) getX(), (float) getY(), (float) getZ()),
+//                            MolangExp.EMPTY,
+//                            null);
+//                }
+//                return f;
+//            });
+//        }
     }
 
     @Override
@@ -113,6 +122,7 @@ public class NuclearExplosionEntity extends LivingEntity{
         super.defineSynchedData(builder);
         builder.define(IS_DETONATING, true);
         builder.define(AGE, 0);
+        builder.define(R, 0);
         builder.define(HAS_CLIENT, false);
         builder.define(MARKED_FOR_REMOVAL, false);
     }
@@ -162,6 +172,14 @@ public class NuclearExplosionEntity extends LivingEntity{
 
     public void setAge(int age) {
         getEntityData().set(AGE, age);
+    }
+
+    public int getR() {
+        return getEntityData().get(R);
+    }
+
+    public void setR(int r) {
+        getEntityData().set(R, r);
     }
 
     public boolean hasClient() {
@@ -216,7 +234,47 @@ public class NuclearExplosionEntity extends LivingEntity{
         super.tick();
 
         if (level().isClientSide) {
-            //System.out.println(getAge());
+            ParticleSystemManager manager = VeilRenderSystem.renderer().getParticleManager();
+            for (int i = 0; i < 36; i++){
+                if (random.nextInt(200) != 1) continue;
+                try {
+                    ParticleEmitter sparks = manager.createEmitter(RebbysNuclearExplosion.getResource("spark"));
+                    double theta = Math.PI*2*i/36;
+                    float size = NuclearExplosionRenderer.getSize(getAge())*1.2f;
+                    double x = getX() + size*Math.cos(theta);
+                    double z = getZ() + size*Math.sin(theta);
+                    sparks.setPosition(new Vec3(
+                            x,
+                            level().getHeight(Heightmap.Types.WORLD_SURFACE, (int)x, (int)z),
+                            z));
+                    manager.addParticleSystem(sparks);
+                } catch (Exception ignored) {
+
+                }
+
+
+            }
+
+            if (tickCount%5 != 0) return;
+
+            for (int i = 0; i < 90; i++){
+                try {
+                    ParticleEmitter sparks = manager.createEmitter(RebbysNuclearExplosion.getResource("spark1"));
+                    double theta = Math.PI*2*i/90;
+                    float size = getR();
+                    double x = getX() + size*Math.cos(theta);
+                    double z = getZ() + size*Math.sin(theta);
+                    sparks.setPosition(new Vec3(
+                            x,
+                            level().getHeight(Heightmap.Types.WORLD_SURFACE, (int)x, (int)z),
+                            z));
+                    manager.addParticleSystem(sparks);
+                } catch (Exception ignored) {
+
+                }
+
+
+            }
             return;
         }
 
@@ -234,6 +292,7 @@ public class NuclearExplosionEntity extends LivingEntity{
 
         if (isDetonating() && getAge() > 0) {
             setDetonating(irradiation.irradiateThreaded((ServerLevel) level(), this));
+            setR(irradiation.getInnerMax().x - irradiation.getOrigin().x);
 //            if (getAge() % 3 == 0)
 //                playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 128.0f, 1.0f);
             //System.out.println(isDetonating);

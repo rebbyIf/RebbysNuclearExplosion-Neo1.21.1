@@ -54,7 +54,7 @@ public class Irradiation {
 
     private static final BlockState WATER_LIQUID_STATE = getDefaultBlockState("minecraft:water");
 
-    private static final int SURFACE_SCAN_Y = 16;
+    private static final int SURFACE_SCAN_Y = 12;
 
     private static final List<TagKey<Block>> identifiedTagKeys = new ArrayList<>();
     private static Thread [] threads = null;

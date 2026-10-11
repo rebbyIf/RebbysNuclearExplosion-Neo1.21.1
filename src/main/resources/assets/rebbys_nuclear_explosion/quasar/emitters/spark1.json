@@ -1,0 +1,10 @@
+{
+  "count": 1,
+  "emitter_settings": {
+    "shape": "rebbys_nuclear_explosion:spark1",
+    "particle_settings": "rebbys_nuclear_explosion:spark"
+  },
+  "particle_data": "rebbys_nuclear_explosion:spark",
+  "max_lifetime": 1,
+  "rate": 1
+}
