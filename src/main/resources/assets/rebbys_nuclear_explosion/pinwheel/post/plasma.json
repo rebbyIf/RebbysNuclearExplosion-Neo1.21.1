@@ -76,33 +76,6 @@
       },
       "format": "R11F_G11F_B10F"
     },
-    "layer4": {
-      "width": "q.screen_width / 16.0",
-      "height": "q.screen_height / 16.0",
-      "depth": false,
-      "filter": {
-        "blur": true
-      },
-      "format": "R11F_G11F_B10F"
-    },
-    "layer5": {
-      "width": "q.screen_width / 32.0",
-      "height": "q.screen_height / 32.0",
-      "depth": false,
-      "filter": {
-        "blur": true
-      },
-      "format": "R11F_G11F_B10F"
-    },
-    "layer6": {
-      "width": "q.screen_width / 64.0",
-      "height": "q.screen_height / 64.0",
-      "depth": false,
-      "filter": {
-        "blur": true
-      },
-      "format": "R11F_G11F_B10F"
-    },
     "final": {
       "depth": false,
       "filter": {
