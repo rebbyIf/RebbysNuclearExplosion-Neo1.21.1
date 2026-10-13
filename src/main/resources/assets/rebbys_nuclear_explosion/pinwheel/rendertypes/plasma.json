@@ -10,7 +10,7 @@
       },
       {
         "type": "minecraft:write_mask",
-        "depth": false
+        "depth": true
       },
       {
         "type": "minecraft:cull",
@@ -32,7 +32,7 @@
       },
       {
         "type": "minecraft:write_mask",
-        "depth": false
+        "depth": true
       },
       {
         "type": "minecraft:cull",

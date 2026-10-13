@@ -15,7 +15,7 @@ void main() {
     sum += texture(DiffuseSampler0, texCoord + halfpixel.xy * offset);
     sum += texture(DiffuseSampler0, texCoord + vec2(halfpixel.x, -halfpixel.y) * offset);
     sum += texture(DiffuseSampler0, texCoord - vec2(halfpixel.x, -halfpixel.y) * offset);
-    sum = sum / 4.0;
+    sum = sum / 3.0;
     sum.w = min(1,sum.w);
     fragColor = sum;
 }

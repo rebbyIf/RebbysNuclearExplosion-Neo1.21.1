@@ -211,7 +211,7 @@ public class Irradiation {
 
                     if (blockPos.getX() % 16 == 0 && blockPos.getY() % 16 == 0 && blockPos.getZ() % 16 == 0){
 
-                        FillBiome.fill(level, blockPos, blockPos.offset(16,16,16), RebbysNuclearExplosion.getResource("irradiated_wasteland"));
+                        FillBiome.fill(level, blockPos.atY(level.getMinBuildHeight()), blockPos.offset(16,0,16).atY(level.getMaxBuildHeight()), RebbysNuclearExplosion.getResource("irradiated_wasteland"));
 
                     }
 
@@ -359,8 +359,8 @@ public class Irradiation {
                                 blockState = Config.scorchedGrassBlockState;
                                 changeBlockState = true;
                             }
-                            if (checkBlockStateHasTag(blockState, "rebbys_nuclear_explosion:nuke_burns/moss") && isExposed(blockPos, blocks)){
-                                blockState = Config.scorchedMossBlockState;
+                            if (checkBlockStateHasTag(blockState, "rebbys_nuclear_explosion:nuke_burns/log") && isExposed(blockPos, blocks)){
+                                blockState = Config.scorchedLogBlockState;
                                 changeBlockState = true;
                             }
 

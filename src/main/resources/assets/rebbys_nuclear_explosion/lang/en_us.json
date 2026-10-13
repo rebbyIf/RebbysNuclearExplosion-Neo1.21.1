@@ -1,4 +1,18 @@
 {
   "death.attack.radiation": "%s faced the power of the sun...",
-  "death.attack.radiation.player": "%s faced the power of the sun invoked by %s"
+  "death.attack.radiation.player": "%s faced the power of the sun invoked by %s",
+  "rebbys_nuclear_explosion.config.is_testing_environment": "Testing?",
+  "rebbys_nuclear_explosion.config.threads": "Max Threads",
+  "rebbys_nuclear_explosion.config.r": "Radii",
+  "rebbys_nuclear_explosion.config.step": "Explosion Step",
+  "rebbys_nuclear_explosion.config.power": "Explosion Power",
+  "rebbys_nuclear_explosion.config.block.fire": "Fire State",
+  "rebbys_nuclear_explosion.config.block.glass": "Melted Glass State",
+  "rebbys_nuclear_explosion.config.block.diamondized": "Diamondized Coal State",
+  "rebbys_nuclear_explosion.config.block.irradiated": "Irradiated Block State",
+  "rebbys_nuclear_explosion.config.block.liquid": "Irradiated Liquid State",
+  "rebbys_nuclear_explosion.config.block.grass": "Burnt Grass State",
+  "rebbys_nuclear_explosion.config.block.logs": "Burnt Log State",
+  "rebbys_nuclear_explosion.config.client.particle_reduction": "Particle Reduction",
+  "rebbys_nuclear_explosion.config.client.visibility": "Visibility"
 }

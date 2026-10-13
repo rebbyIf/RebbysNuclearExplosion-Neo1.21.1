@@ -1,8 +1,4 @@
 {
-  "color_buffers": [
-    {
-      "type": "render_type"
-    }
-  ],
+  "type": "texture",
   "depth": true
 }

@@ -21,5 +21,5 @@ void main() {
     }
     color *= vertexColor;
     //color.rgb = mix(overlayColor.rgb, color.rgb, overlayColor.a);
-    fragColor = linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
+    fragColor = color;//linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
 }

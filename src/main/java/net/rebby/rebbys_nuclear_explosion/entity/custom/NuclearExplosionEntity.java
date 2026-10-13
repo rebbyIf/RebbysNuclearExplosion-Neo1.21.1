@@ -27,8 +27,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.rebby.rebbys_nuclear_explosion.Config;
 import net.rebby.rebbys_nuclear_explosion.RebbysNuclearExplosion;
 import net.rebby.rebbys_nuclear_explosion.entity.render.NuclearExplosionRenderer;
+import net.rebby.rebbys_nuclear_explosion.event.ModEvents;
+import net.rebby.rebbys_nuclear_explosion.networking.NukeData;
 import net.rebby.rebbys_nuclear_explosion.util.Irradiation;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
@@ -95,19 +99,6 @@ public class NuclearExplosionEntity extends LivingEntity{
     @Override
     public void onAddedToLevel() {
         super.onAddedToLevel();
-//        if (!level().isClientSide) {
-//            ((ServerLevel) level()).getPlayers(serverPlayer -> {
-//                boolean f = serverPlayer.distanceTo(this) < 1000;
-//                if (f) {
-//                    EmitterCreationPacketS2C.sendToClient(serverPlayer,
-//                            RebbysNuclearExplosion.getResource("nuclear_explosion"),
-//                            new Vector3f((float) getX(), (float) getY(), (float) getZ()),
-//                            MolangExp.EMPTY,
-//                            null);
-//                }
-//                return f;
-//            });
-//        }
     }
 
     @Override
@@ -236,11 +227,11 @@ public class NuclearExplosionEntity extends LivingEntity{
         if (level().isClientSide) {
             ParticleSystemManager manager = VeilRenderSystem.renderer().getParticleManager();
             for (int i = 0; i < 36; i++){
-                if (random.nextInt(200) != 1) continue;
+                if (random.nextInt(200) != 1 || random.nextDouble() < Config.particleReduction) continue;
                 try {
                     ParticleEmitter sparks = manager.createEmitter(RebbysNuclearExplosion.getResource("spark"));
                     double theta = Math.PI*2*i/36;
-                    float size = NuclearExplosionRenderer.getSize(getAge())*1.2f;
+                    float size = ModEvents.ClientEvents.getSize(getAge())*1.2f;
                     double x = getX() + size*Math.cos(theta);
                     double z = getZ() + size*Math.sin(theta);
                     sparks.setPosition(new Vec3(
@@ -258,6 +249,7 @@ public class NuclearExplosionEntity extends LivingEntity{
             if (tickCount%5 != 0) return;
 
             for (int i = 0; i < 90; i++){
+                if (random.nextDouble() < Config.particleReduction) continue;
                 try {
                     ParticleEmitter sparks = manager.createEmitter(RebbysNuclearExplosion.getResource("spark1"));
                     double theta = Math.PI*2*i/90;
@@ -293,10 +285,14 @@ public class NuclearExplosionEntity extends LivingEntity{
         if (isDetonating() && getAge() > 0) {
             setDetonating(irradiation.irradiateThreaded((ServerLevel) level(), this));
             setR(irradiation.getInnerMax().x - irradiation.getOrigin().x);
-//            if (getAge() % 3 == 0)
-//                playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 128.0f, 1.0f);
-            //System.out.println(isDetonating);
         }
+
+        PacketDistributor.sendToPlayersInDimension((ServerLevel) level(), new NukeData(
+                getAge(),
+                getR(),
+                new Vector3f((float) getX(), (float) getY(), (float) getZ()),
+                getId(),
+                false));
 
         if (!isDetonating() && getAge() > 460) {
             remove(RemovalReason.DISCARDED);

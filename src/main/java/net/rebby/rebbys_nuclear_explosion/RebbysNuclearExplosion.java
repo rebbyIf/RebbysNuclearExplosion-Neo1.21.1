@@ -2,7 +2,6 @@ package net.rebby.rebbys_nuclear_explosion;
 
 import net.minecraft.resources.ResourceLocation;
 import net.rebby.rebbys_nuclear_explosion.client.Sounds;
-import net.rebby.rebbys_nuclear_explosion.client.rendering.PostProcessing;
 import net.rebby.rebbys_nuclear_explosion.entity.Entities;
 import org.slf4j.Logger;
 
@@ -39,15 +38,24 @@ public class RebbysNuclearExplosion {
     public RebbysNuclearExplosion(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
 
-
         modEventBus.addListener(this::commonSetup);
+
         modEventBus.addListener(Config::onLoad);
         modEventBus.addListener(Config::onReload);
+
 
         Entities.register(modEventBus);
         Sounds.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         //CREATIVE_MODE_TABS.register(modEventBus);
+
+        // Register our mod's ModConfigSpec so that FML can create and load the config file for us
+
+
+
+
+
+
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (RebbysNuclearExplosion) to respond directly to events.
@@ -56,9 +64,9 @@ public class RebbysNuclearExplosion {
 
         // Register the item to a creative tab
         //modEventBus.addListener(this::addCreative);
-
-        // Register our mod's ModConfigSpec so that FML can create and load the config file for us
+        modContainer.registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_SPEC);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
